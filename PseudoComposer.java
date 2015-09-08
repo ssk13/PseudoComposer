@@ -1,7 +1,8 @@
-// PseudoComposer.java
-// Composes a short piece based on a melodic motive, input fron a user
-//
-// by Sarah Klein
+/* PseudoComposer.java
+   Composes a short piece based on a melodic motive, input from a user
+
+   by Sarah Klein
+*/
 
 import java.awt.*;
 import java.awt.event.*;
@@ -16,8 +17,13 @@ import javax.swing.AbstractButton.*;
 import javax.swing.SwingUtilities.*;
 import org.jfugue.*; 
 
+/*
+	Initialize the width and height of the application,
+	implement the main method (which creates the jframe, 
+	sets the close behavior, and makes the frame visible)
+*/
 public class PseudoComposer {
-	//width and height of applicatoin
+	//width and height of application
 	private static final int WIDTH =  485;
 	private static final int HEIGHT = 375;
 
@@ -32,52 +38,61 @@ public class PseudoComposer {
 	}
 }
 
+/*
+	The ImageFrame that contains the application - basically a JFrame
+*/
 class ImageFrame extends JFrame {
-	private final JFileChooser chooser;
 
 	//visual application components
-	JPanel appPanel, controlsPanel;
-	ImageIcon background, icon, choraleIcon, preludeIcon, themeIcon, toggleIcon;
-	JLabel label, choraleLabel, preludeLabel, themeLabel, toggleLabel;
-	BufferedImage image, backgroundImage, choraleActiveImage, choraleInactiveImage, preludeActiveImage, preludeInactiveImage, themeActiveImage, 
-				  themeInactiveImage;
-	JButton actionButton;
-	int windowWidth, windowHeight, 
-		measureWidth = 460, 
-		measureHeight = 169, 
-		composeWidth = 100, 
-		composeHeight = 42;
+	private final JFileChooser chooser;
+	JPanel appPanel;
+	ImageIcon icon;
+	JLabel label;
+	BufferedImage image;
+	int measureWidth = 460, 
+		measureHeight = 169;
 
 	//disclaimer that explains the application
 	JOptionPane disclaimer;
 
-	//progam components
+	//program components
 	Measure entry;
-	Staff composition;
-	Boolean composed = false, 
-			preludeActive = false, 
-			choraleActive = false, 
-			themeActive = false, 
-			playing = false;
+	Chorale composition;
+	Boolean playing = false;
 	Player player = new Player();
 	String playerString = "";
 	String instrument = "ACOUSTIC_GRAND"; 
 	int tempo = 120, 
-	minNotes = 3;	//minimum number of notes needed to composer a work
+		minNotes = 3;	//minimum number of notes needed to composer a work
 
+	/*
+		Constructor
+		Sets the size, 
+		sets the title, 
+		creates a file chooser, 
+		initializes the application
+	*/
 	public ImageFrame (int width, int height) {
-		this.windowWidth = width;
-		this.windowHeight = height;
-		this.setTitle("PseudoComposer");
-		this.setSize(width, height);
+		this.setTitle("PseudoComposer");					// JFrame method
+		this.setSize(width, height);						// JFrame method
 		this.chooser = new JFileChooser();
-		this.chooser.setCurrentDirectory(new File("."));
+		this.chooser.setCurrentDirectory(new File("."));	// JFileChooser method
 		initialize();
 	}
 
+	/*
+		Initializes all of the components of the JFrame (the JPanels),
+		creates the JOptionPane for the disclaimer
+		creates the 'entry' measure in which users can enter notes,
+		draws the entry,
+		sets up the menus,
+		adds the mouse listeners
+		sets up the images,
+		draws the application components to the screen
+	*/
 	public void initialize () {
+		// set up the appPanel's layout and create the disclaimer
 		this.appPanel = new JPanel(new BorderLayout());
-		this.controlsPanel = new JPanel(new BorderLayout());
 		getContentPane().add(this.appPanel);
 		this.disclaimer = new JOptionPane();
 
@@ -88,37 +103,21 @@ class ImageFrame extends JFrame {
 		this.label = new JLabel(this.icon);
 		this.label.setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
 
-		this.actionButton = new JButton("Play theme");
-
-		initializeImages();
 		addMouseListeners();
 		setUpMenu();
-
 		this.appPanel.add(label, BorderLayout.PAGE_START);
-		this.appPanel.add(this.controlsPanel, BorderLayout.CENTER);
-		this.controlsPanel.add(this.choraleLabel, BorderLayout.LINE_START);
-		this.controlsPanel.add(this.themeLabel, BorderLayout.CENTER);
-		this.controlsPanel.add(this.preludeLabel, BorderLayout.LINE_END);
-		this.appPanel.add(this.actionButton, BorderLayout.PAGE_END);
+
+		// paint our initial entry
 		displayMeasure(this.entry);
-		drawCompOptions();
 	}
 
-	public void initializeImages () {
-		setComposeImages();
-		this.background = new ImageIcon(this.backgroundImage);
-		this.preludeIcon = new ImageIcon(this.preludeInactiveImage);
-		this.preludeLabel = new JLabel(this.preludeIcon);
-		this.choraleIcon = new ImageIcon(this.choraleInactiveImage);
-		this.choraleLabel = new JLabel(this.choraleIcon);
-		this.themeIcon = new ImageIcon(this.themeInactiveImage);
-		this.themeLabel = new JLabel(this.themeIcon);
-	}
-
+	/*
+		Add the mouse listeners for the application, including the right-click on a measure,
+		which adds a note, and the left-click, which deletes a note
+	*/
 	public void addMouseListeners () {
 		this.label.addMouseListener( new MouseAdapter() {
  			public void mousePressed(MouseEvent event) {
- 				Point p;
  				//left-click: add note
  				if (event.getModifiers() == MouseEvent.BUTTON1_MASK)
  					addNote(event.getPoint());
@@ -127,64 +126,15 @@ class ImageFrame extends JFrame {
 					deleteNote(event.getPoint());
  			}
  		} );
-
- 		this.actionButton.addMouseListener( new MouseAdapter() {
- 			public void mousePressed(MouseEvent event) {
- 				if (event.getModifiers() == MouseEvent.BUTTON1_MASK) {
- 					if (playing)
- 						stopPlaying();
- 					else if (entry.noteCount > 0) {
- 						if (preludeActive) {
- 							makeSuitePrelude();
- 						}
- 						else if (choraleActive) {
- 							makeChorale();
- 						}
- 						else if (themeActive) {
- 							playTheme();
- 						}
- 						actionButton.setText("Stop playing");
- 					}
- 				}
- 			}
- 		} );
-
-		this.preludeLabel.addMouseListener( new MouseAdapter() {
- 			public void mousePressed(MouseEvent event) {
- 				if (event.getModifiers() == MouseEvent.BUTTON1_MASK) {
- 					if (entry.noteCount > 0) {
- 						toggle("prelude");
- 					}
- 				}
- 			}
- 		} );
-
- 		this.themeLabel.addMouseListener( new MouseAdapter() {
- 			public void mousePressed(MouseEvent event) {
- 				if (event.getModifiers() == MouseEvent.BUTTON1_MASK) {
- 					if (entry.noteCount > 0) {
- 						toggle("theme");
- 					}
- 				}
- 			}
- 		} );
-
- 		this.choraleLabel.addMouseListener( new MouseAdapter() {
- 			public void mousePressed(MouseEvent event) {
- 				if (event.getModifiers() == MouseEvent.BUTTON1_MASK) {
- 					if (entry.noteCount > 0) {
- 						toggle("chorale");
- 					}
- 				}
- 			}
- 		} );
 	}
 
+	/*
+		Stops any music that's playing, 
+		adds a note to the end of the measure,
+		updates the playerString,
+		repaints the measure
+	*/
 	public void addNote (Point p) {
-		if (this.entry.noteCount == 0) {
-			this.themeActive = true;
-			drawCompOptions();
-		}
 		if (playing)
 			stopPlaying();
 		this.entry.addNote(p);
@@ -192,25 +142,34 @@ class ImageFrame extends JFrame {
 		displayMeasure(this.entry);
 	}
 
+	/*
+		Changes the instrument that will be used to play the PlayerString,
+		stops anything that's currently playing
+	*/
 	public void changeInstrument (String inst) {
 		this.instrument = inst;
 		if (playing)
 			stopPlaying();
 	}
 
+	/*
+		Stops any music that's playing, 
+		deletes a note if it has been right-clicked on
+		updates the playerString,
+		repaints the measure
+		future: only stop playing the measure and rewrite the measure if something was deleted
+	*/
 	public void deleteNote (Point p) {
 		this.entry.deleteNote(p);
-		if (this.entry.noteCount == 0) {
-			this.themeActive = this.preludeActive = this.choraleActive = false;
-			drawCompOptions();
-			this.actionButton.setText("Play theme");
-		}
 		if (playing)
 			stopPlaying();
 		this.playerString = this.entry.toString();
 		displayMeasure(this.entry);
 	}
 
+	/*
+		Paints the view from a Measure onto the label of the application
+	*/
 	public void displayMeasure (Measure measure) {
 		this.image = measure.getView();
 
@@ -223,39 +182,9 @@ class ImageFrame extends JFrame {
 		});
 	}
 
-	public void drawCompOptions () {
-		SwingUtilities.invokeLater(new Runnable () {
-			public void run() {
-				if (preludeActive)
-					preludeIcon.setImage(preludeActiveImage);
-				else
-					preludeIcon.setImage(preludeInactiveImage);
-				if (choraleActive)
-					choraleIcon.setImage(choraleActiveImage);
-				else
-					choraleIcon.setImage(choraleInactiveImage);
-				if (themeActive)
-					themeIcon.setImage(themeActiveImage);
-				else
-					themeIcon.setImage(themeInactiveImage);
-				if (preludeActive || choraleActive || themeActive) {
-					preludeLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-					choraleLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-					themeLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-				}
-				else {
-					preludeLabel.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-					choraleLabel.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-					themeLabel.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-				}
-				preludeLabel.repaint();
-				choraleLabel.repaint();
-				themeLabel.repaint();
-				validate();
-			}
-		});
-	}
-
+	/*
+		Prompts the user for a tempo in BPM - requires a positive integer
+	*/
 	private int getTempo () {
 		Boolean trying = true;
 		int val = 0;
@@ -279,6 +208,10 @@ class ImageFrame extends JFrame {
 		return val;
 	}
 
+	/*
+		Accesses a .txt file from the user's local machine, which should contain a valid PlayerString for the player
+		Future: allow MusicXML to be converted into a JFugue PlayerString
+	*/
 	public void load () {
 		Boolean trying = true;
 		File file = null;
@@ -286,6 +219,7 @@ class ImageFrame extends JFrame {
 		BufferedInputStream bis = null;
 		DataInputStream dis = null;
 
+		// try to get a file from the user
 		while (trying) {
 			if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION)
 				file = chooser.getSelectedFile();
@@ -306,41 +240,35 @@ class ImageFrame extends JFrame {
       			JOptionPane.showMessageDialog(this, exception);
     		}
 		}
+		// play the string on the file that you loaded
 		play();
 	}
 
+	/*
+		Writes a chorale based on the entry - most of this logic is in Chorale.java,
+		plays that composition
+	*/
 	public void makeChorale () {
-		if (!this.composed)
-			this.composed = true;
 		int noteCount = this.entry.getNoteCount();
-		if (noteCount < 3)
+		//don't write anything if you don't have enough notes because what's the point
+		if (noteCount < this.minNotes)
 			playCheesyToccata();
 		else {
-			composition = new Chorale(entry, entry.getKey(), this.instrument);
+			composition = new Chorale(entry, entry.getKey());
 			composition.pseudoCompose();
 			this.playerString = composition.toString();
 			play();
 		}
 	}
 
-	public void makeSuitePrelude () {
-		if (!this.composed)
-			this.composed = true;
-		int noteCount = this.entry.getNoteCount();
-		if (noteCount < this.minNotes)
-			playCheesyPrelude();
-		else {
-			composition = new SuiteMovement(entry, entry.getKey(), this.instrument);
-			composition.pseudoCompose();
-			this.playerString = composition.toString();
-			play();
-		}
-	}
-
+	/*
+		Returns a string representing the currently saved voices, notes, instrument, and tempo
+	*/
 	public String makeStringWithInstrumentAndTempo () {
 		Boolean changed = false;
 		String newString = "";
 		for (int i = 0; i != this.playerString.length(); ++i) {
+			//formats the voices
 			if (this.playerString.charAt(i) == 'V') {
 				changed = true;
 				newString += "V";
@@ -348,6 +276,7 @@ class ImageFrame extends JFrame {
 				newString += " I[" + instrument + "] T" + tempo + " ";
 				i += 2;
 			}
+			//formats the instruments
 			else if (this.playerString.charAt(i) == 'I') {
 				while (this.playerString.charAt(i) != '|')
 					++i;
@@ -362,6 +291,12 @@ class ImageFrame extends JFrame {
 		return this.playerString;
 	}
 
+	/*
+		not done
+		Stops anything that's currently playing
+		Creates a pattern from the current PlayerString, tempo, and instrument,
+		plays this string in a new Thread
+	*/
 	public void play () {
 		new Thread (new Runnable () {
 			public void run() {
@@ -370,42 +305,22 @@ class ImageFrame extends JFrame {
 					player.stop();
 				Pattern pattern = new Pattern(makeStringWithInstrumentAndTempo());
 		 		player.play(pattern);
-		 		if (choraleActive)
-			 		actionButton.setText("Make chorale");
-			 	else if (themeActive)
-			 		actionButton.setText("Play theme");
-			 	else
-			 		actionButton.setText("Make prelude");
 			 	playing = false;
 			}
 		}).start(); 
 	}
 
-	public void playTheme () {
+	/*
+		plays the current entry
+	*/
+	public void playEntry () {
 		this.playerString = entry.toString();
 		play();
 	}
 
-	public void playCheesyPrelude () {
-		this.playerString = "T60 g2s d3s b3s a3s b3s d3s b3s d3s g2s d3s b3s a3s b3s d3s b3s d3s " +  
-							"g2s e3s c4s b3s c4s e3s c4s e3s g2s e3s c4s b3s c4s e3s c4s e3s " + 
-							"g2s f#3s c4s b3s c4s f#3s c4s f#3s g2s f#3s c4s b3s c4s f#3s c4s f#3s " + 
-							"g2s g3s b3s a3s b3s g3s b3s g3s g2s g3s b3s a3s b3s g3s b3s g3s " + 
-							"g2s e3s b3s a3s b3s g3s f#3s g3s e3s g3s f#3s g3s b2s d3s c#3s b2s " + 
-							"c#3s g3s a3s g3s a3s g3s a3s g3s c#3s g3s a3s g3s a3s g3s a3s g3s " + 
-							"f#3s a3s d4s c#4s d4s a3s g3s a3s f#3s a3s g3s a3s d3s f#3s e3s d3s " + 
-							"e2s b2s g3s f#3s g3s b2s g3s b2s e2s b2s g3s f#3s g3s b2s g3s b2s " +
-							"e2s c#3s d3s e3s d3s c#3s b2s a2s g3s f#3s e3s d4s c#4s b3s a3s g3s " + 
-							"f#3s e3s d3s d4s a3s d4s f#3s a3s d3s e3s f#3s a3s g3s f#3s e3s d3s " + 
-							"g#3s d3s f3s e3s f3s d3s g#3s d3s b3s d3s f3s e3s f3s d3s g#3s d3s " +
-							"c3s e3s a3s b3s c4s a3s e3s d3s c3s e3s a3s b3s c4s a3s f#3s e3s " + 
-							"d#3s f#3s d#3s f#3s a3s f#3s a3s f#3s d#3s f#3s d#3s f#3s a3s f#3s a3s f#3s " + 
-							"g3s f#3s e3s g3s f#3s g3s a3s f#3s g3s f#3s e3s d3s T50 c3s T40 b2s T30 a2s T20 g2s";
-		play();
-		String disc = "I'm going to need a few more notes than that to work with...";
-		this.disclaimer.showMessageDialog(this, disc);	
-	}
-
+	/*
+		Plays the beginning of Bach's Toccata in Dm and asks for more notes to work with
+	*/
 	public void playCheesyToccata () {
 		this.playerString = "T60 d2s d3s c#3s d3s a3s d3s c#3s d3s f3s d3s c#3s d3s d2s d3s c3s d3s";
 		play();	
@@ -413,6 +328,11 @@ class ImageFrame extends JFrame {
 		this.disclaimer.showMessageDialog(this, disc);	
 	}
 
+	/*
+		Writes the PlayerString to a txt file in the user's current directory
+		Future: Save as XML format so that it can be imported into Finale, possibly with a later prompt
+		with instructions or a file format *choice*
+	*/
 	public void save () {
 		try {
 			PrintWriter transcriber = new PrintWriter("PseudoComposition.txt", "UTF-8");
@@ -423,91 +343,13 @@ class ImageFrame extends JFrame {
 		}
 	}
 
-	public void setComposeImages () {
-		BufferedImage tempLabel;
-		File imagefile;
-		Graphics2D g2d;
-
-		this.backgroundImage = new BufferedImage(windowWidth, windowHeight, BufferedImage.TYPE_INT_ARGB);
-		g2d = (Graphics2D) this.backgroundImage.createGraphics();
-
-		try {
-            imagefile = new File("images/BackgroundImage.jpg");
-            tempLabel = ImageIO.read(imagefile);
-            g2d.drawImage(tempLabel, null, 0, 0);
-        } catch (IOException e) {
-              e.printStackTrace();
-        }
-
-		this.choraleActiveImage = new BufferedImage(composeWidth,composeHeight, BufferedImage.TYPE_INT_ARGB);
-		g2d = (Graphics2D) this.choraleActiveImage.createGraphics();
-
-		try {
-            imagefile = new File("images/ChoraleActive.png");
-            tempLabel = ImageIO.read(imagefile);
-            g2d.drawImage(tempLabel, null, 0, 0);
-        } catch (IOException e) {
-              e.printStackTrace();
-        }
-
-        this.choraleInactiveImage = new BufferedImage(composeWidth,composeHeight, BufferedImage.TYPE_INT_ARGB);
-		g2d = (Graphics2D) this.choraleInactiveImage.createGraphics();
-
-		try {
-            imagefile = new File("images/ChoraleInactive.png");
-            tempLabel = ImageIO.read(imagefile);
-            g2d.drawImage(tempLabel, null, 0, 0);
-        } catch (IOException e) {
-              e.printStackTrace();
-        }
-
-		this.preludeActiveImage = new BufferedImage(composeWidth,composeHeight, BufferedImage.TYPE_INT_ARGB);
-		g2d = (Graphics2D) this.preludeActiveImage.createGraphics();
-
-		try {
-            imagefile = new File("images/PreludeActive.png");
-            tempLabel = ImageIO.read(imagefile);
-            g2d.drawImage(tempLabel, null, 0, 0);
-        } catch (IOException e) {
-              e.printStackTrace();
-        }
-        
-		this.preludeInactiveImage = new BufferedImage(composeWidth,composeHeight, BufferedImage.TYPE_INT_ARGB);
-		g2d = (Graphics2D) this.preludeInactiveImage.createGraphics();
-
-		try {
-            imagefile = new File("images/PreludeInactive.png");
-            tempLabel = ImageIO.read(imagefile);
-            g2d.drawImage(tempLabel, null, 0, 0);
-        } catch (IOException e) {
-              e.printStackTrace();
-        }
-
-		this.themeActiveImage = new BufferedImage(composeWidth,composeHeight, BufferedImage.TYPE_INT_ARGB);
-		g2d = (Graphics2D) this.themeActiveImage.createGraphics();
-
-		try {
-            imagefile = new File("images/ThemeActive.png");
-            tempLabel = ImageIO.read(imagefile);
-            g2d.drawImage(tempLabel, null, 0, 0);
-        } catch (IOException e) {
-              e.printStackTrace();
-        }
-
-		this.themeInactiveImage = new BufferedImage(composeWidth,composeHeight, BufferedImage.TYPE_INT_ARGB);
-		g2d = (Graphics2D) this.themeInactiveImage.createGraphics();
-
-		try {
-            imagefile = new File("images/ThemeInactive.png");
-            tempLabel = ImageIO.read(imagefile);
-            g2d.drawImage(tempLabel, null, 0, 0);
-        } catch (IOException e) {
-              e.printStackTrace();
-        }
-	}
-
+	/*
+		Returns a JMenu initialized with the offered instrument choices, organized in alphabetical
+		order. The default instrument choice for the app is 'PIANO' (though 'warm' sounds better
+		for chorales in my opinion...)
+	*/
 	public JMenu setUpInstrumentChoices () {
-		JMenu changeInstrument = new JMenu("Change instrument");
+		JMenu changeInstrumentMenu = new JMenu("Change instrument");
 
 		JMenuItem accordian = new JMenuItem("Accordian");
 		accordian.addActionListener (new ActionListener () {
@@ -515,7 +357,7 @@ class ImageFrame extends JFrame {
 				changeInstrument("ACCORDIAN");
 			}
 		});
-		changeInstrument.add(accordian);
+		changeInstrumentMenu.add(accordian);
 
 		JMenuItem bass = new JMenuItem("Acoustic Bass");
 		bass.addActionListener (new ActionListener () {
@@ -523,7 +365,7 @@ class ImageFrame extends JFrame {
 				changeInstrument("ACOUSTIC_BASS");
 			}
 		});
-		changeInstrument.add(bass);
+		changeInstrumentMenu.add(bass);
 
 		JMenuItem bagpipe = new JMenuItem("Bagpipe");
 		bagpipe.addActionListener (new ActionListener () {
@@ -531,7 +373,7 @@ class ImageFrame extends JFrame {
 				changeInstrument("BAGPIPE");
 			}
 		});
-		changeInstrument.add(bagpipe);
+		changeInstrumentMenu.add(bagpipe);
 
 		JMenuItem banjo = new JMenuItem("Banjo");
 		banjo.addActionListener (new ActionListener () {
@@ -539,7 +381,7 @@ class ImageFrame extends JFrame {
 				changeInstrument("BANJO");
 			}
 		});
-		changeInstrument.add(banjo);
+		changeInstrumentMenu.add(banjo);
 
 		JMenuItem clarinet = new JMenuItem("Clarinet");
 		clarinet.addActionListener (new ActionListener () {
@@ -547,7 +389,7 @@ class ImageFrame extends JFrame {
 				changeInstrument("CLARINET");
 			}
 		});
-		changeInstrument.add(clarinet);
+		changeInstrumentMenu.add(clarinet);
 
 		JMenuItem crystal = new JMenuItem("Crystal Glasses");
 		crystal.addActionListener (new ActionListener () {
@@ -555,7 +397,7 @@ class ImageFrame extends JFrame {
 				changeInstrument("CRYSTAL");
 			}
 		});
-		changeInstrument.add(crystal);
+		changeInstrumentMenu.add(crystal);
 
 		JMenuItem flute = new JMenuItem("Flute");
 		flute.addActionListener (new ActionListener () {
@@ -563,7 +405,7 @@ class ImageFrame extends JFrame {
 				changeInstrument("FLUTE");
 			}
 		});
-		changeInstrument.add(flute);
+		changeInstrumentMenu.add(flute);
 
 		JMenuItem horn = new JMenuItem("French Horn");
 		horn.addActionListener (new ActionListener () {
@@ -571,7 +413,7 @@ class ImageFrame extends JFrame {
 				changeInstrument("FRENCH_HORN");
 			}
 		});
-		changeInstrument.add(horn);
+		changeInstrumentMenu.add(horn);
 
 		JMenuItem goblin = new JMenuItem("Goblins");
 		goblin.addActionListener (new ActionListener () {
@@ -579,7 +421,7 @@ class ImageFrame extends JFrame {
 				changeInstrument("GOBLINS");
 			}
 		});
-		changeInstrument.add(goblin);
+		changeInstrumentMenu.add(goblin);
 
 		JMenuItem marimba = new JMenuItem("Marimba");
 		marimba.addActionListener (new ActionListener () {
@@ -587,7 +429,7 @@ class ImageFrame extends JFrame {
 				changeInstrument("MARIMBA");
 			}
 		});
-		changeInstrument.add(marimba);
+		changeInstrumentMenu.add(marimba);
 
 		JMenuItem oboe = new JMenuItem("Oboe");
 		oboe.addActionListener (new ActionListener () {
@@ -595,7 +437,7 @@ class ImageFrame extends JFrame {
 				changeInstrument("OBOE");
 			}
 		});
-		changeInstrument.add(oboe);
+		changeInstrumentMenu.add(oboe);
 
 		JMenuItem ocarina = new JMenuItem("Ocarina");
 		ocarina.addActionListener (new ActionListener () {
@@ -603,7 +445,7 @@ class ImageFrame extends JFrame {
 				changeInstrument("OCARINA");
 			}
 		});
-		changeInstrument.add(ocarina);
+		changeInstrumentMenu.add(ocarina);
 
 		JMenuItem organ = new JMenuItem("Organ");
 		organ.addActionListener (new ActionListener () {
@@ -611,7 +453,7 @@ class ImageFrame extends JFrame {
 				changeInstrument("CHURCH_ORGAN");
 			}
 		});
-		changeInstrument.add(organ);
+		changeInstrumentMenu.add(organ);
 
 		JMenuItem piano = new JMenuItem("Piano");
 		piano.addActionListener (new ActionListener () {
@@ -619,7 +461,7 @@ class ImageFrame extends JFrame {
 				changeInstrument("PIANO");
 			}
 		});
-		changeInstrument.add(piano);
+		changeInstrumentMenu.add(piano);
 
 		JMenuItem steel = new JMenuItem("Steel Drums");
 		steel.addActionListener (new ActionListener () {
@@ -627,7 +469,7 @@ class ImageFrame extends JFrame {
 				changeInstrument("STEEL_DRUMS");
 			}
 		});
-		changeInstrument.add(steel);
+		changeInstrumentMenu.add(steel);
 
 		JMenuItem voice = new JMenuItem("Steel");
 		voice.addActionListener (new ActionListener () {
@@ -635,7 +477,7 @@ class ImageFrame extends JFrame {
 				changeInstrument("VOICE");
 			}
 		});
-		changeInstrument.add(voice);
+		changeInstrumentMenu.add(voice);
 
 		JMenuItem strings = new JMenuItem("Strings");
 		strings.addActionListener (new ActionListener () {
@@ -643,7 +485,7 @@ class ImageFrame extends JFrame {
 				changeInstrument("ORCHESTRAL_STRINGS");
 			}
 		});
-		changeInstrument.add(strings);
+		changeInstrumentMenu.add(strings);
 
 		JMenuItem warm = new JMenuItem("Warm");
 		warm.addActionListener (new ActionListener () {
@@ -651,13 +493,32 @@ class ImageFrame extends JFrame {
 				changeInstrument("WARM");
 			}
 		});
-		changeInstrument.add(warm);
+		changeInstrumentMenu.add(warm);
 
-		return changeInstrument;
+		return changeInstrumentMenu;
 	}
 
+	/*
+		Adds the menu items to the menu
+	*/
 	public void setUpMenu () {
 		JMenu fileMenu = new JMenu("Options");
+
+		JMenuItem playEntryItem = new JMenuItem("Play current entry");
+		playEntryItem.addActionListener (new ActionListener () {
+			public void actionPerformed (ActionEvent event) {
+				playEntry();
+			}
+		});
+		fileMenu.add(playEntryItem);
+
+		JMenuItem composeChoraleItem = new JMenuItem("Compose chorale");
+		composeChoraleItem.addActionListener (new ActionListener () {
+			public void actionPerformed (ActionEvent event) {
+				makeChorale();
+			}
+		});
+		fileMenu.add(composeChoraleItem);
 
 		fileMenu.add(setUpInstrumentChoices());
 
@@ -689,13 +550,13 @@ class ImageFrame extends JFrame {
 
 		JMenu disclaimer = new JMenu("Disclaimer");
 
-		JMenuItem read = new JMenuItem("Read");
-		read.addActionListener (new ActionListener () {
+		JMenuItem readDisclaimer = new JMenuItem("Read disclaimer");
+		readDisclaimer.addActionListener (new ActionListener () {
 			public void actionPerformed (ActionEvent event) {
 				showDisclaimer();
 			}
 		});
-		disclaimer.add(read);
+		disclaimer.add(readDisclaimer);
 
 		JMenuBar menuBar = new JMenuBar();
 		menuBar.add(fileMenu);
@@ -703,6 +564,10 @@ class ImageFrame extends JFrame {
 		this.setJMenuBar(menuBar);
 	}
 
+	/*
+		Opens a message dialog with a disclaimer about the application and it's well, inadequacy, because otherwise I'll feel bad
+		for making it...
+	*/
 	public void showDisclaimer () {
 		String disc = 
 			"While playing with my PseudoComposer, you'll notice that its compositions tend to be precise, balanced, and \n" + 
@@ -712,33 +577,49 @@ class ImageFrame extends JFrame {
 		this.disclaimer.showMessageDialog(this, disc);
 	}
 
+	/*
+		Stops the player
+	*/
 	public void stopPlaying () {
 		this.player.stop();
 		this.playing = false;
-		if (choraleActive)
-	 		actionButton.setText("Make chorale");
-	 	else if (themeActive)
-	 		actionButton.setText("Play theme");
-	 	else
-	 		actionButton.setText("Make prelude");
-	}
-
-	public void toggle(String pressed) {
-		if (playing)
-			stopPlaying();
-		choraleActive = preludeActive = themeActive = false;
-		if (pressed == "prelude") {
-			preludeActive = true;
-			actionButton.setText("Make prelude");
-		}
-		else if (pressed == "theme") {
-			themeActive = true;
-			actionButton.setText("Play theme");
-		}
-		else if (pressed == "chorale") {
-			choraleActive = true;
-			actionButton.setText("Make chorale");
-		}
-		drawCompOptions();			 		
 	}
 }
+
+
+	/*
+		Temporarily omitted - will reinclude potentially later but don't want to lose it!
+		Will write a prelude based on Bach's Prelude in his 1st cello suite
+		
+		public void makeSuitePrelude () {
+			int noteCount = this.entry.getNoteCount();
+			if (noteCount < this.minNotes)
+				playCheesyPrelude();
+			else {
+				composition = new SuiteMovement(entry, entry.getKey(), this.instrument);
+				composition.pseudoCompose();
+				this.playerString = composition.toString();
+				play();
+			}
+
+		public void playCheesyPrelude () {
+			this.playerString = "T60 g2s d3s b3s a3s b3s d3s b3s d3s g2s d3s b3s a3s b3s d3s b3s d3s " +  
+								"g2s e3s c4s b3s c4s e3s c4s e3s g2s e3s c4s b3s c4s e3s c4s e3s " + 
+								"g2s f#3s c4s b3s c4s f#3s c4s f#3s g2s f#3s c4s b3s c4s f#3s c4s f#3s " + 
+								"g2s g3s b3s a3s b3s g3s b3s g3s g2s g3s b3s a3s b3s g3s b3s g3s " + 
+								"g2s e3s b3s a3s b3s g3s f#3s g3s e3s g3s f#3s g3s b2s d3s c#3s b2s " + 
+								"c#3s g3s a3s g3s a3s g3s a3s g3s c#3s g3s a3s g3s a3s g3s a3s g3s " + 
+								"f#3s a3s d4s c#4s d4s a3s g3s a3s f#3s a3s g3s a3s d3s f#3s e3s d3s " + 
+								"e2s b2s g3s f#3s g3s b2s g3s b2s e2s b2s g3s f#3s g3s b2s g3s b2s " +
+								"e2s c#3s d3s e3s d3s c#3s b2s a2s g3s f#3s e3s d4s c#4s b3s a3s g3s " + 
+								"f#3s e3s d3s d4s a3s d4s f#3s a3s d3s e3s f#3s a3s g3s f#3s e3s d3s " + 
+								"g#3s d3s f3s e3s f3s d3s g#3s d3s b3s d3s f3s e3s f3s d3s g#3s d3s " +
+								"c3s e3s a3s b3s c4s a3s e3s d3s c3s e3s a3s b3s c4s a3s f#3s e3s " + 
+								"d#3s f#3s d#3s f#3s a3s f#3s a3s f#3s d#3s f#3s d#3s f#3s a3s f#3s a3s f#3s " + 
+								"g3s f#3s e3s g3s f#3s g3s a3s f#3s g3s f#3s e3s d3s T50 c3s T40 b2s T30 a2s T20 g2s";
+			play();
+			String disc = "I'm going to need a few more notes than that to work with...";
+			this.disclaimer.showMessageDialog(this, disc);	
+		}
+
+	}*/
