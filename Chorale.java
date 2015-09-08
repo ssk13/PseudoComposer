@@ -4,13 +4,27 @@ import java.util.Random;
 public class Chorale extends Staff {
 	Chord[] music;
 	int[] chords, choices = new int[10];
-	public final int[][][] members = {{{0,4,7},{2,5,9},{4,7,11},{5,9,0},{7,11,2},{9,0,4},{11,2,5}},
-						 {{0,3,7},{2,5,8},{3,7,11},{5,8,0},{7,11,2},{8,0,3},{11,2,5}}};
+	public final int[][][] members = {
+										{//major
+											{0,4,7},{2,5,9},{4,7,11},{5,9,0},{7,11,2},{9,0,4},{11,2,5}
+										},
+						 				{//minor
+						 					{0,3,7},{2,5,8},{3,7,11},{5,8,0},{7,11,2},{8,0,3},{11,2,5}
+						 				}
+						 			};
 	HashMap<Integer,Integer> innerVoiceTranspositions = new HashMap<Integer,Integer>();
 	Measure entry;
 	int chordCount = 32, notesPerMeasure = 8;
-	int sopUpper = 60, sopLower = 48, altUpper = 48, altLower = 33, 
-		tenUpper = 41, tenLower = 29, basUpper =  29, basLower = 12, tempo = 40;
+	//range constrictuions on voices
+	int sopUpper = 60, 
+		sopLower = 48, 
+		altUpper = 48, 
+		altLower = 33, 
+		tenUpper = 41, 
+		tenLower = 29, 
+		basUpper =  29, 
+		basLower = 12, 
+		tempo = 120;
 	Note tonic;
 	Boolean major = true;
 	Random rand = new Random();
@@ -114,6 +128,11 @@ public class Chorale extends Staff {
 		}
 	}
 
+	/*
+		Maps the way that the inner voices should move
+		lvalue: difference between notes * 1000 + chord moving from * 100 + chord moving to + 10 + isMajor
+		rvalue: transposition of the voice
+	*/
 	public void initializeInnerVoiceHashMap () {
 		this.innerVoiceTranspositions.put(  121,-3);
 		this.innerVoiceTranspositions.put(  120,-4);

@@ -17,6 +17,7 @@ import javax.swing.SwingUtilities.*;
 import org.jfugue.*; 
 
 public class PseudoComposer {
+	//width and height of applicatoin
 	private static final int WIDTH =  485;
 	private static final int HEIGHT = 375;
 
@@ -34,25 +35,39 @@ public class PseudoComposer {
 class ImageFrame extends JFrame {
 	private final JFileChooser chooser;
 
+	//visual application components
 	JPanel appPanel, controlsPanel;
-	ImageIcon icon, choraleIcon, preludeIcon, themeIcon, toggleIcon;
+	ImageIcon background, icon, choraleIcon, preludeIcon, themeIcon, toggleIcon;
 	JLabel label, choraleLabel, preludeLabel, themeLabel, toggleLabel;
-	BufferedImage image, choraleActiveImage, choraleInactiveImage, preludeActiveImage, preludeInactiveImage, themeActiveImage, 
+	BufferedImage image, backgroundImage, choraleActiveImage, choraleInactiveImage, preludeActiveImage, preludeInactiveImage, themeActiveImage, 
 				  themeInactiveImage;
 	JButton actionButton;
-	int measureWidth = 460, measureHeight = 169, composeWidth = 100, composeHeight = 42;
+	int windowWidth, windowHeight, 
+		measureWidth = 460, 
+		measureHeight = 169, 
+		composeWidth = 100, 
+		composeHeight = 42;
 
+	//disclaimer that explains the application
 	JOptionPane disclaimer;
 
+	//progam components
 	Measure entry;
 	Staff composition;
-	Boolean composed = false, preludeActive = false, choraleActive = false, themeActive = false, playing = false;
+	Boolean composed = false, 
+			preludeActive = false, 
+			choraleActive = false, 
+			themeActive = false, 
+			playing = false;
 	Player player = new Player();
 	String playerString = "";
 	String instrument = "ACOUSTIC_GRAND"; 
-	int tempo = 40, minNotes = 3;
+	int tempo = 120, 
+	minNotes = 3;	//minimum number of notes needed to composer a work
 
 	public ImageFrame (int width, int height) {
+		this.windowWidth = width;
+		this.windowHeight = height;
 		this.setTitle("PseudoComposer");
 		this.setSize(width, height);
 		this.chooser = new JFileChooser();
@@ -75,14 +90,7 @@ class ImageFrame extends JFrame {
 
 		this.actionButton = new JButton("Play theme");
 
-		setComposeImages();
-		this.preludeIcon = new ImageIcon(this.preludeInactiveImage);
-		this.preludeLabel = new JLabel(this.preludeIcon);
-		this.choraleIcon = new ImageIcon(this.choraleInactiveImage);
-		this.choraleLabel = new JLabel(this.choraleIcon);
-		this.themeIcon = new ImageIcon(this.themeInactiveImage);
-		this.themeLabel = new JLabel(this.themeIcon);
-
+		initializeImages();
 		addMouseListeners();
 		setUpMenu();
 
@@ -94,6 +102,17 @@ class ImageFrame extends JFrame {
 		this.appPanel.add(this.actionButton, BorderLayout.PAGE_END);
 		displayMeasure(this.entry);
 		drawCompOptions();
+	}
+
+	public void initializeImages () {
+		setComposeImages();
+		this.background = new ImageIcon(this.backgroundImage);
+		this.preludeIcon = new ImageIcon(this.preludeInactiveImage);
+		this.preludeLabel = new JLabel(this.preludeIcon);
+		this.choraleIcon = new ImageIcon(this.choraleInactiveImage);
+		this.choraleLabel = new JLabel(this.choraleIcon);
+		this.themeIcon = new ImageIcon(this.themeInactiveImage);
+		this.themeLabel = new JLabel(this.themeIcon);
 	}
 
 	public void addMouseListeners () {
@@ -409,11 +428,22 @@ class ImageFrame extends JFrame {
 		File imagefile;
 		Graphics2D g2d;
 
+		this.backgroundImage = new BufferedImage(windowWidth, windowHeight, BufferedImage.TYPE_INT_ARGB);
+		g2d = (Graphics2D) this.backgroundImage.createGraphics();
+
+		try {
+            imagefile = new File("images/BackgroundImage.jpg");
+            tempLabel = ImageIO.read(imagefile);
+            g2d.drawImage(tempLabel, null, 0, 0);
+        } catch (IOException e) {
+              e.printStackTrace();
+        }
+
 		this.choraleActiveImage = new BufferedImage(composeWidth,composeHeight, BufferedImage.TYPE_INT_ARGB);
 		g2d = (Graphics2D) this.choraleActiveImage.createGraphics();
 
 		try {
-            imagefile = new File("images/choraleactive.png");
+            imagefile = new File("images/ChoraleActive.png");
             tempLabel = ImageIO.read(imagefile);
             g2d.drawImage(tempLabel, null, 0, 0);
         } catch (IOException e) {
@@ -424,7 +454,7 @@ class ImageFrame extends JFrame {
 		g2d = (Graphics2D) this.choraleInactiveImage.createGraphics();
 
 		try {
-            imagefile = new File("images/choraleinactive.png");
+            imagefile = new File("images/ChoraleInactive.png");
             tempLabel = ImageIO.read(imagefile);
             g2d.drawImage(tempLabel, null, 0, 0);
         } catch (IOException e) {
@@ -435,7 +465,7 @@ class ImageFrame extends JFrame {
 		g2d = (Graphics2D) this.preludeActiveImage.createGraphics();
 
 		try {
-            imagefile = new File("images/preludeactive.png");
+            imagefile = new File("images/PreludeActive.png");
             tempLabel = ImageIO.read(imagefile);
             g2d.drawImage(tempLabel, null, 0, 0);
         } catch (IOException e) {
@@ -446,7 +476,7 @@ class ImageFrame extends JFrame {
 		g2d = (Graphics2D) this.preludeInactiveImage.createGraphics();
 
 		try {
-            imagefile = new File("images/preludeinactive.png");
+            imagefile = new File("images/PreludeInactive.png");
             tempLabel = ImageIO.read(imagefile);
             g2d.drawImage(tempLabel, null, 0, 0);
         } catch (IOException e) {
@@ -457,7 +487,7 @@ class ImageFrame extends JFrame {
 		g2d = (Graphics2D) this.themeActiveImage.createGraphics();
 
 		try {
-            imagefile = new File("images/themeactive.png");
+            imagefile = new File("images/ThemeActive.png");
             tempLabel = ImageIO.read(imagefile);
             g2d.drawImage(tempLabel, null, 0, 0);
         } catch (IOException e) {
@@ -468,7 +498,7 @@ class ImageFrame extends JFrame {
 		g2d = (Graphics2D) this.themeInactiveImage.createGraphics();
 
 		try {
-            imagefile = new File("images/themeinactive.png");
+            imagefile = new File("images/ThemeInactive.png");
             tempLabel = ImageIO.read(imagefile);
             g2d.drawImage(tempLabel, null, 0, 0);
         } catch (IOException e) {

@@ -2,6 +2,11 @@ import java.util.Random;
 
 /*
 	creates a tree-like structure displaying all of the possible "next chords"
+	These chord qualities are assuming the same treatment regardless of major or minor key
+	a 1 chord goes to any other chord
+	a 2, 4, or 6 chord goes to 2, 4, 5, 6, or 7 (predominant goes to predominant or to dominant)
+	a 3 chord goes to 2, 3, 4, or 6 (mediant goes to predominant)
+	a a 5 or 7 chord goes to 5, 7, 6, or 1 (dominant goes to dominant, tonic, or a deceptive cadence)
 */
 
 public class ChordTree {
