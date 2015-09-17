@@ -1,7 +1,5 @@
-import java.util.Random;
-
 /*
-	creates a tree-like structure displaying all of the possible "next chords"
+	Creates a tree-like structure displaying all of the possible "next chords"
 	These chord qualities are assuming the same treatment regardless of major or minor key
 	a 1 chord goes to any other chord
 	a 2, 4, or 6 chord goes to 2, 4, 5, 6, or 7 (predominant goes to predominant or to dominant)
@@ -9,20 +7,21 @@ import java.util.Random;
 	a a 5 or 7 chord goes to 5, 7, 6, or 1 (dominant goes to dominant, tonic, or a deceptive cadence)
 */
 
+import java.util.Random;
+
 public class ChordTree {
 	ChordTree[] next;
-	int chordVal;
-	ChordTree prevTree;
-	int depth;
+	ChordTree prevTree,
+			  toSet;
 	int[] chords;
-	Boolean tried = false;
-	Boolean selected = false;
-	ChordTree toSet;
+	int chordVal,
+		depth;
+	Boolean tried = false,
+			selected = false;
 
-/*
-	constructor - sets the branches according to the current chord's quality
-*/
-
+	/*
+		Constructor - sets the branches according to the current chord's quality
+	*/
 	public ChordTree (int chordVal, int depth, ChordTree prevTree) {
 		this.depth = depth;
 		this.prevTree = prevTree;
@@ -85,21 +84,21 @@ public class ChordTree {
 	}
 
 	/*
-		finds a possible "next chord" by cross-referencing the difference between the next note and this note
+		Finds a possible "next chord" by cross-referencing the difference between the next note and this note
 		with a 3-d array of chordal/intervallic relationships
 	*/
-
 	public int getChordAndSetPath (Random rand, int[][][] members, Note sop, Note tonic, Boolean isMajor) {	
-		int dif = tonic.getDif(sop), major = (isMajor) ? 0 : 1;
+		int dif = tonic.getDif(sop), major = (isMajor) ? 0 : 1,
+			chordChoice = 0,
+			possChords;
+		Boolean trying = true;
 
-		int possChords, chordChoice = 0;
 		if (this.chordVal == 1)
 			possChords = 7;
 		else if (this.chordVal % 2 == 0)
 			possChords = 5;
 		else
 			possChords = 4;
-		Boolean trying = true;
 		while (trying) {
 			chordChoice = rand.nextInt(possChords);
 			if (!next[chordChoice].tried && ((members[major][chords[chordChoice] - 1][0] == dif) || 
@@ -115,7 +114,6 @@ public class ChordTree {
 	/*
 		checks that the music doesn't suck yet
 	*/
-
 	public Boolean hasChordLeft () {
 		for (int i = 0; i != next.length; ++i) {
 			if (!next[i].tried)

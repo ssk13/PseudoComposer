@@ -1,9 +1,30 @@
+/* Represents a 4-voice chorale in the style of JS Bach
+
+   by Sarah Klein
+   FUTURE
+   add passing tones
+ */
+
 import java.util.HashMap;
 import java.util.Random;
 
-public class Chorale extends Staff {
-	Chord[] music;
-	int[] chords, choices = new int[10];
+public class Chorale {
+	Chord[] chords;
+	int[] choices = new int[10],
+		  chordValues;
+	int chordCount = 32, 
+		notesPerMeasure = 8,
+		sopUpper = 48, 		//range constrictuions on voices
+		sopLower = 36, 
+		altUpper = 36, 
+		altLower = 21, 
+		tenUpper = 29, 
+		tenLower = 17, 
+		basUpper =  17, 
+		basLower = 0, 
+		tempo = 120;
+		//expand this array to include extended chords:
+			// neopolitans, 7th chords, secondary dominance, &c
 	public final int[][][] members = {
 										{//major
 											{0,4,7},{2,5,9},{4,7,11},{5,9,0},{7,11,2},{9,0,4},{11,2,5}
@@ -14,54 +35,69 @@ public class Chorale extends Staff {
 						 			};
 	HashMap<Integer,Integer> innerVoiceTranspositions = new HashMap<Integer,Integer>();
 	Measure entry;
-	int chordCount = 32, notesPerMeasure = 8;
-	//range constrictuions on voices
-	int sopUpper = 60, 
-		sopLower = 48, 
-		altUpper = 48, 
-		altLower = 33, 
-		tenUpper = 41, 
-		tenLower = 29, 
-		basUpper =  29, 
-		basLower = 12, 
-		tempo = 120;
 	Note tonic;
 	Boolean major = true;
 	Random rand = new Random();
-	String instrument = "WARM";
 
-	public Chorale (Measure entry, int key, String inst) {
-		if (inst != "")
-			this.instrument = inst;
+	/*
+		Constructor
+		Recieves entry that you're harmonizing and the key of the measure
+	*/
+	public Chorale (Measure entry, int key) {
 		this.tonic = new Note(key);
 		if ((key == 2) || (key == 4) || (key == 9))
 			this.major = false;
 		this.entry = entry;
 	}
 
+	/*
+		Creates the chorale!
+		Prints the key,
+		initializes the map by which we do the voice-leading
+		initializes the chords array,
+		fixes any wrong notes in the entry according to the key,
+		fills the chords array from a ChordTree,
+		fills in the inner voices,
+		puts the last chord in root position,
+		puts the notes in the proper octaves for their voices
+	*/
 	public void pseudoCompose() {
-		System.out.println(this.tonic.getName() + " " + this.major);
+		System.out.print(this.tonic.getName() + " ");
+		if (this.major)
+			System.out.println("Major");
+		else
+			System.out.println("Minor");
+
 		initializeInnerVoiceHashMap();
-		this.music = new Chord[this.chordCount];
+		this.chords = new Chord[this.chordCount];
 		checkKeyAndFixWrongNotes();
 		fillChordsArray(entry.noteCount);
 		printChords();
-		this.music[0] = new Chord(4,'q');
-		this.music[0].notes[0] = new Note(entry.notes[i], 'q');
-		fillFirstChord();	
+		//The first chord has 4 quarter notes
+		this.chords[0] = new Chord(4,'q');
+		//The top voice of the first chord is the first note in the entry measure
+		this.chords[0].notes[0] = new Note(entry.notes[i], 'q');
+		fillFirstChord();
 		for (int i = 1; i != this.chordCount; ++i) {
-			this.music[i] = new Chord(4,'q');
+			this.chords[i] = new Chord(4,'q');
+			//if we're still harmonizing, only fill the bottom 3 voices
 			if (i < entry.noteCount) {
-				this.music[i].notes[0] = new Note(entry.notes[i], 'q');
+				this.chords[i].notes[0] = new Note(entry.notes[i], 'q');
 				fillInnerVoices(i, 1, 4);
 			}
+			//otherwise, fill all 4 voices
 			else
 				fillInnerVoices(i,0,4);
-		}		
-		this.music[this.chordCount - 1].notes[3] = new Note(tonic, 'q');	
+		}	
+		fillLastChord();	
 		putInProperOctaves();
 	}
 
+	/*
+		Makes sure that every note in the entry is valid in the key that we've selected
+		If it's not, it alters it appropriately
+		Future: Find ways to harmonize every given note
+	*/
 	public void checkKeyAndFixWrongNotes () {
 		int dif, randVal = rand.nextInt(2);
 
@@ -79,51 +115,99 @@ public class Chorale extends Staff {
 		}
 	}
 
+	/*
+		Puts the last note in root position (by putting tonic in the bass voice) and ensures
+		that there is a 3rd in the chord, in case the third was in the bass voice previously,
+		by replacing one of the tonic notes with the third
+	*/
+	public void fillLastChord () {
+		int shouldTransposeThisNote = rand.nextInt(2),
+			majorVal = this.major ? 1 : 0,
+			i;
+
+		//if the bass note is the third
+		if (this.tonic.getDif(this.chords[this.chordCount - 1].notes[3]) == 3 || 
+			this.tonic.getDif(this.chords[this.chordCount - 1].notes[3]) == 4 ||
+			this.tonic.getDif(this.chords[this.chordCount - 1].notes[3]) == 8 ||
+			this.tonic.getDif(this.chords[this.chordCount - 1].notes[3]) == 9) {
+
+			for (int i = 0; i != 3; ++i) {
+				if (this.tonic.getDif(this.chords[this.chordCount - 1].notes[i]) == 0) {
+					if (shouldTransposeThisNote-- == 0) {
+						this.chords[this.chordCount - 1].swapNotes(i,3);
+						return;
+					}
+				}
+			}
+		}
+		else {
+			this.chords[this.chordCount - 1].notes[3] = new Note(tonic, 'q');
+		}
+	}
+
+	/*
+		Picks a chord progression for our chorale by finding a valid path with a ChordTree
+		for the given entry, and then picking next chords pseudorandomly until it gets to
+		the cadence, at which point it resolves with dominant-tonic motion
+	*/
 	public void fillChordsArray (int numNotes) {
 		ChordTree path = new ChordTree(1, numNotes, null);
-		Boolean working = true;
 		int here = this.entry.noteCount, counting = 0, preCadencePlace = this.chordCount - 5;
-		this.chords = new int[this.chordCount];
-		this.chords[0] = 1;
+		this.chordValues = new int[this.chordCount];
+		//start with a I/i chord
+		this.chordValues[0] = 1;
 		harmonizeEnteredNotes(this.entry.noteCount, path);
 
 		while (here < this.chordCount-4) {
-			this.chords[here] = getNextChord(this.chords[here - 1]);
+			this.chordValues[here] = getNextChord(this.chordValues[here - 1]);
 			++here;
 		}
 		
-		if ((this.chords[preCadencePlace] == 7) || (this.chords[preCadencePlace] == 5))
-			this.chords[preCadencePlace + 1] = 1;
+		if ((this.chordValues[preCadencePlace] == 7) || (this.chordValues[preCadencePlace] == 5))
+			this.chordValues[preCadencePlace + 1] = 1;
 		else
-			this.chords[preCadencePlace + 1] = getPredominant();
-		this.chords[preCadencePlace + 2] = getPredominantOrDominant();
-		this.chords[preCadencePlace + 3] = getDominant();
-		this.chords[preCadencePlace + 4] = 1;
+			this.chordValues[preCadencePlace + 1] = getPredominant();
+		this.chordValues[preCadencePlace + 2] = getPredominantOrDominant();
+		this.chordValues[preCadencePlace + 3] = getDominant();
+		this.chordValues[preCadencePlace + 4] = 1;
 
 		if (counting == 200)
 			System.out.println("infinite looped - check your Chorale.java fillChorsAray code!");
 	}
 
+	/*
+		Initializes the first chord with 2 tonics, a 3rd, and a 5th
+	*/
 	public void fillFirstChord () {
-		int majorVal = (this.major ? 1 : 0), randVal = this.rand.nextInt(2);
+		int majorVal = (this.major ? 1 : 0), 
+			randVal = this.rand.nextInt(2),
+			interval;
+		// put tonic in the other 3 voices
 		for (int i = 1; i != 4; ++i)
-			this.music[0].notes[i] = new Note(tonic, 'q');
-		int interval = this.tonic.getDif(this.music[0].notes[0]);
+			this.chords[0].notes[i] = new Note(tonic, 'q');
 
+		// get the interval of the first note
+		interval = this.tonic.getDif(this.chords[0].notes[0]);
+
+		// if it's tonic or the 5th
 		if ((interval == 0) || (interval == 7)) {
-			this.music[0].notes[2-randVal].transpose(3 + majorVal);
+			// put the appropriate 3rd in one of the other notes
+			this.chords[0].notes[2-randVal].transpose(3 + majorVal);
+			//if it's tonic, put a 5th in the other note
 			if (interval == 0)
-				this.music[0].notes[2-(1-randVal)].transpose(-5);
+				this.chords[0].notes[2-(1-randVal)].transpose(-5);
 		}
+		//if it's the third, put a 5th in one of the other voices
 		else if ((interval == 3) || (interval == 4))
-			this.music[0].notes[2-randVal].transpose(-5);
+			this.chords[0].notes[2-randVal].transpose(-5);
+		//otherwise, the note isn't in a i/I chord, so make it one of the correct notes, then fill the chord appropriately
 		else {
 			randVal = this.rand.nextInt(3);
-			this.music[0].notes[0] = new Note(tonic, 'q');
+			this.chords[0].notes[0] = new Note(tonic, 'q');
 			if (randVal == 0)
-				this.music[0].notes[0].transpose(3 + majorVal);
+				this.chords[0].notes[0].transpose(3 + majorVal);
 			else if (randVal == 1)
-				this.music[0].notes[0].transpose(-5);
+				this.chords[0].notes[0].transpose(-5);
 			fillFirstChord();
 		}
 	}
@@ -132,6 +216,7 @@ public class Chorale extends Staff {
 		Maps the way that the inner voices should move
 		lvalue: difference between notes * 1000 + chord moving from * 100 + chord moving to + 10 + isMajor
 		rvalue: transposition of the voice
+		Future: MAKE BETTER
 	*/
 	public void initializeInnerVoiceHashMap () {
 		this.innerVoiceTranspositions.put(  121,-3);
@@ -246,9 +331,19 @@ public class Chorale extends Staff {
 		this.innerVoiceTranspositions.put( 5761, 4);
 	}
 
+	/*
+		Assigns notes to the voices based on the previous chord, the chord that you're
+		moving to, and the place in the chord that the previous note was, according to
+		the hashmap
+	*/
 	public void fillInnerVoices (int chordIndex, int firstVoice, int lastVoice) {
-		Chord fromChord = music[chordIndex - 1], toFillChord = music[chordIndex];
-		int from = chords[chordIndex - 1], toFill = chords[chordIndex], randval, dif, majorVal = (this.major ? 1 : 0);
+		Chord fromChord = chords[chordIndex - 1], 
+			  toFillChord = chords[chordIndex];
+		int from = chordValues[chordIndex - 1], 
+			toFill = chordValues[chordIndex], 
+			majorVal = (this.major ? 1 : 0),
+			randval, 
+			dif;
 		Note newNote; 
 		Integer hashKey;
 
@@ -273,6 +368,11 @@ public class Chorale extends Staff {
 		}
 	}
 
+	/*
+		Returns a likely next chord according to Bach's harmonic progressions, with the different
+		choices chosen randomly but weighted appropriately
+		FUTURE: make better by improving accuracy and including more chord types
+	*/
 	public int getNextChord (int lastChord) {
 		if (lastChord == 1) {
 			this.choices[0] = 1;
@@ -361,30 +461,45 @@ public class Chorale extends Staff {
 		return this.choices[rand.nextInt(10)];
 	}
 
+	/*
+		Returns a dominant chord, weighted to *probably* return a 5 chord
+	*/
 	public int getDominant () {
 		int[] choices = {5,5,5,7};
 		int choice = rand.nextInt(4);
 		return choices[choice];
 	}
 
+	/*
+		Returns a predominant chord
+	*/
 	public int getPredominant () {
 		int[] choices = {2,2,4,4,6};
 		int choice = rand.nextInt(5);
 		return choices[choice];
 	}
 
+	/*
+		Returns either a predominant or a dominant chord
+	*/
 	public int getPredominantOrDominant () {
 		int[] choices = {2,2,4,4,5,5,6,6,7};
 		int choice = rand.nextInt(9);
 		return choices[choice];
 	}
 
+	/*
+		not done
+		Traverses a pre-initialized tree representing possible chord paths, iterating through the options and,
+		if it hits a point where it's tried all the options, marks that path as "tried" and returns to a previous
+		node to try a new path
+	*/
 	public void harmonizeEnteredNotes (int enteredNotes, ChordTree path) {
 		int here = 1, counting = 0;
-		while ((here < enteredNotes) && (counting < 200)) {
+		while ((here < enteredNotes) && (counting++ < 200)) {
 			if (path.hasChordLeft() || (here == enteredNotes)) {
 				path.selected = true;
-				this.chords[here] = path.getChordAndSetPath(rand, members, entry.notes[here], tonic, major);
+				this.chordValues[here] = path.getChordAndSetPath(rand, members, entry.notes[here], tonic, major);
 				path = path.toSet;
 				++here;
 			}
@@ -394,62 +509,74 @@ public class Chorale extends Staff {
 				path = path.prevTree;
 				--here;
 			}
-			++counting;
+			if (counting == 200) {
+				System.out.println("infinite looped - check your Chorale.java fillChorsAray code!");
+				return;
+			}
 		}
-		if (counting == 200)
-			System.out.println("infinite looped - check your Chorale.java fillChorsAray code!");
 	}
 
+	/*
+		Prints out the numerical value of the chords, 4 to a line
+	*/
 	public void printChords () {
 		for (int i = 0; i != 32; ++i) {
-			System.out.print(chords[i]);
+			System.out.print(chordValues[i]);
 			if (i%4 == 3)
 				System.out.println();
 		}
 	}
 
+	/*
+		Makes sure that each note is in the proper register for its voice
+		Future: rather than having octave leaps, find the closest diatonic note
+			(making sure not to omit any required notes)
+	*/
 	public void putInProperOctaves () {
 		for (int i = 0; i != this.chordCount; ++i) {
 			for (int j = 0; j != 4; ++j) {
 				if (j == 0) {
-					while (this.music[i].notes[j].val < sopLower)
-						this.music[i].notes[j].val += 12;
-					while (this.music[i].notes[j].val > sopLower)
-						this.music[i].notes[j].val -= 12;
+					while (this.chords[i].notes[j].val < sopLower)
+						this.chords[i].notes[j].val += 12;
+					while (this.chords[i].notes[j].val > sopUpper)
+						this.chords[i].notes[j].val -= 12;
 				}
 				else if (j == 1) {
-					while (this.music[i].notes[j].val < altLower)
-						this.music[i].notes[j].val += 12;
-					while (this.music[i].notes[j].val > altLower)
-						this.music[i].notes[j].val -= 12;
+					while (this.chords[i].notes[j].val < altLower)
+						this.chords[i].notes[j].val += 12;
+					while (this.chords[i].notes[j].val > altUpper)
+						this.chords[i].notes[j].val -= 12;
 				}
 				else if (j == 2) {
-					while (this.music[i].notes[j].val < tenLower)
-						this.music[i].notes[j].val += 12;
-					while (this.music[i].notes[j].val > tenLower)
-						this.music[i].notes[j].val -= 12;
+					while (this.chords[i].notes[j].val < tenLower)
+						this.chords[i].notes[j].val += 12;
+					while (this.chords[i].notes[j].val > tenUpper)
+						this.chords[i].notes[j].val -= 12;
 				}
 				else {
-					while (this.music[i].notes[j].val < basLower)
-						this.music[i].notes[j].val += 12;
-					while (this.music[i].notes[j].val > basLower)
-						this.music[i].notes[j].val -= 12;
+					while (this.chords[i].notes[j].val < basLower)
+						this.chords[i].notes[j].val += 12;
+					while (this.chords[i].notes[j].val > basUpper)
+						this.chords[i].notes[j].val -= 12;
 				}
 			}
 		}
 	}
 
+	/*
+		Returns a string representation of the work that can be played by a player
+	*/
 	public String toString () {
 		try {
 			String voice0 = "V0 | ";
 			String voice1 = "V1 | ";
 			String voice2 = "V2 | ";
 			String voice3 = "V3 | ";
-			for (i = 0; i != chordCount; ++i) {
-				voice0 += music[i].notes[0].toString() + " ";
-				voice1 += music[i].notes[1].toString() + " ";
-				voice2 += music[i].notes[2].toString() + " ";
-				voice3 += music[i].notes[3].toString() + " ";
+			for (int i = 0; i != chordCount; ++i) {
+				voice0 += chords[i].notes[0].toString() + " ";
+				voice1 += chords[i].notes[1].toString() + " ";
+				voice2 += chords[i].notes[2].toString() + " ";
+				voice3 += chords[i].notes[3].toString() + " ";
 				if (i%4 == 3) {
 					voice0 += " | ";
 					voice1 += " | ";
