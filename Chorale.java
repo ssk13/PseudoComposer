@@ -76,7 +76,7 @@ public class Chorale {
 		//The first chord has 4 quarter notes
 		this.chords[0] = new Chord(4,'q');
 		//The top voice of the first chord is the first note in the entry measure
-		this.chords[0].notes[0] = new Note(entry.notes[i], 'q');
+		this.chords[0].notes[0] = new Note(entry.notes[0], 'q');
 		fillFirstChord();
 		for (int i = 1; i != this.chordCount; ++i) {
 			this.chords[i] = new Chord(4,'q');
@@ -122,8 +122,7 @@ public class Chorale {
 	*/
 	public void fillLastChord () {
 		int shouldTransposeThisNote = rand.nextInt(2),
-			majorVal = this.major ? 1 : 0,
-			i;
+			majorVal = this.major ? 1 : 0;
 
 		//if the bass note is the third
 		if (this.tonic.getDif(this.chords[this.chordCount - 1].notes[3]) == 3 || 
@@ -587,7 +586,6 @@ public class Chorale {
 			return (voice0 + " \n" + voice1 + " \n" + voice2 + " \n" + voice3);
 		}
 		catch (NullPointerException e) {
-			System.out.println(i);
 		}
 		return "";
 	}
