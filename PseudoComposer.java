@@ -248,14 +248,20 @@ class ImageFrame extends JFrame {
 		Writes a chorale based on the entry - most of this logic is in Chorale.java,
 		plays that composition
 	*/
-	public void makeChorale () {
+	public void makeChorale (boolean hasEntry) {
 		int noteCount = this.entry.getNoteCount();
 		//don't write anything if you don't have enough notes because what's the point
-		if (noteCount < this.minNotes)
+		if (noteCount < this.minNotes && hasEntry)
 			playCheesyToccata();
 		else {
-			composition = new Chorale(entry, entry.getKey());
-			composition.pseudoCompose();
+			if (hasEntry) {
+				composition = new Chorale(entry, entry.getKey());
+				composition.pseudoCompose();
+			}
+			else {
+				composition = new Chorale();
+				composition.pseudoComposeFromScratch();
+			}
 			this.playerString = composition.toString();
 			play();
 		}
@@ -515,10 +521,18 @@ class ImageFrame extends JFrame {
 		JMenuItem composeChoraleItem = new JMenuItem("Compose chorale");
 		composeChoraleItem.addActionListener (new ActionListener () {
 			public void actionPerformed (ActionEvent event) {
-				makeChorale();
+				makeChorale(true);
 			}
 		});
 		fileMenu.add(composeChoraleItem);
+
+		JMenuItem composeChoraleFromScratchItem = new JMenuItem("Compose chorale from scratch");
+		composeChoraleFromScratchItem.addActionListener (new ActionListener () {
+			public void actionPerformed (ActionEvent event) {
+				makeChorale(false);
+			}
+		});
+		fileMenu.add(composeChoraleFromScratchItem);
 
 		fileMenu.add(setUpInstrumentChoices());
 
