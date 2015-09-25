@@ -209,6 +209,41 @@ class ImageFrame extends JFrame {
 	}
 
 	/*
+		Writes a cantus firmus from scratch
+		Asks user for:
+			length
+			[future:
+				range
+				mode (1-8)]
+	*/
+	public void makeCantusFirmus () {
+		int length;
+		Boolean trying = true;
+		
+		String stringVal = JOptionPane.showInputDialog("How long should your cantus firmus be (in whole notes)?");
+
+		while (trying) {
+			try {
+				length = Integer.parseInt(stringVal);
+				if (length < 1)
+					throw new IllegalArgumentException();
+				trying = false;
+				CantusFirmus cantusFirmus = new CantusFirmus(length);
+				cantusFirmus.pseudoComposeFromScratch();
+
+				this.playerString = cantusFirmus.toString();
+				play();
+			}
+			catch (NumberFormatException e) {
+				stringVal = JOptionPane.showInputDialog("No, a positive number");
+			}
+			catch (IllegalArgumentException e) {
+				stringVal = JOptionPane.showInputDialog("No, a positive number");
+			}
+		}
+	}
+
+	/*
 		Accesses a .txt file from the user's local machine, which should contain a valid PlayerString for the player
 		Future: allow MusicXML to be converted into a JFugue PlayerString
 	*/
@@ -509,6 +544,14 @@ class ImageFrame extends JFrame {
 	*/
 	public void setUpMenu () {
 		JMenu fileMenu = new JMenu("Options");
+
+		JMenuItem makeCantusFirmusItem = new JMenuItem("Write cantus firmus");
+		makeCantusFirmusItem.addActionListener (new ActionListener () {
+			public void actionPerformed (ActionEvent event) {
+				makeCantusFirmus();
+			}
+		});
+		fileMenu.add(makeCantusFirmusItem);
 
 		JMenuItem playEntryItem = new JMenuItem("Play current entry");
 		playEntryItem.addActionListener (new ActionListener () {
