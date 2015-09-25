@@ -14,14 +14,14 @@ public class Chorale {
 		  chordValues;
 	int chordCount = 32, 
 		notesPerMeasure = 8,
-		sopUpper = 48, 		//range constrictuions on voices
-		sopLower = 36, 
-		altUpper = 36, 
-		altLower = 21, 
-		tenUpper = 29, 
-		tenLower = 17, 
-		basUpper =  17, 
-		basLower = 0, 
+		sopUpper = 43, 		// g5
+		sopLower = 24,		// c4 
+		altUpper = 36, 		// c5
+		altLower = 17,		// g3 
+		tenUpper = 29,		// g4 		
+		tenLower = 12, 		// c3
+		basUpper = 24,		// c4 
+		basLower = 4, 		// e2
 		tempo = 120;
 		//expand this array to include extended chords:
 			// neopolitans, 7th chords, secondary dominance, &c
