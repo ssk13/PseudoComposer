@@ -9,7 +9,7 @@ import java.util.Random;
 
 public class CantusFirmus {
 	Note[] notes;	//Actual notes in the line
-	int numNotes;	//Number of notes in the chord
+	int numNotes;	//Number of notes in the cantus firmus
 	int[] validNoteValues = {26, 28, 29, 31, 33, 35, 36, 38};	//valid note values in our default mode
 	Random rand = new Random();
 
@@ -45,16 +45,15 @@ public class CantusFirmus {
 
 		//fill the first note with either the tonic or the dominant
 		if (randVal == 0) {
-			 notes[place] = new Note(validNoteValues[0]);
+			 notes[place++] = new Note(validNoteValues[0]);
 			 valueOfRepeatedNote = validNoteValues[0];
 		} else if (randVal == 1) {
-			notes[place] = new Note(validNoteValues[4]);
+			notes[place++] = new Note(validNoteValues[4]);
 			valueOfRepeatedNote = validNoteValues[4];
 		} else {
-			notes[place] = new Note(validNoteValues[7]);
+			notes[place++] = new Note(validNoteValues[7]);
 			valueOfRepeatedNote = validNoteValues[7];
 		}
-		++place;
 
 		//put tonic in the last space and the appropriate pentultimate note
 		randVal = rand.nextInt(2);

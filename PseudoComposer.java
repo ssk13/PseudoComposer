@@ -216,10 +216,11 @@ class ImageFrame extends JFrame {
 				range
 				mode (1-8)]
 	*/
-	public void makeCantusFirmus () {
+	public CantusFirmus makeCantusFirmus (boolean play) {
 		int length;
 		Boolean trying = true;
-		
+		CantusFirmus cantusFirmus = null;
+
 		String stringVal = JOptionPane.showInputDialog("How long should your cantus firmus be (in whole notes)?");
 
 		while (trying) {
@@ -228,11 +229,12 @@ class ImageFrame extends JFrame {
 				if (length < 1)
 					throw new IllegalArgumentException();
 				trying = false;
-				CantusFirmus cantusFirmus = new CantusFirmus(length);
+				cantusFirmus = new CantusFirmus(length);
 				cantusFirmus.pseudoComposeFromScratch();
 
 				this.playerString = cantusFirmus.toString();
-				play();
+				if (play)
+					play();
 			}
 			catch (NumberFormatException e) {
 				stringVal = JOptionPane.showInputDialog("No, a positive number");
@@ -241,6 +243,20 @@ class ImageFrame extends JFrame {
 				stringVal = JOptionPane.showInputDialog("No, a positive number");
 			}
 		}
+
+		return cantusFirmus;
+	}
+
+	/*
+		Writes a 2-voice first-species counterpoint composition of a user-given length
+	*/
+	public void makeFirstSpeciesCounterpoint () {
+		CantusFirmus cantusFirmus = makeCantusFirmus(false);
+		System.out.println("here");
+		TwoVoiceCounterpoint counterpoint = new TwoVoiceCounterpoint(cantusFirmus);
+		counterpoint.pseudoComposeFromScratch();
+		this.playerString = counterpoint.toString();
+		play();
 	}
 
 	/*
@@ -548,10 +564,18 @@ class ImageFrame extends JFrame {
 		JMenuItem makeCantusFirmusItem = new JMenuItem("Write cantus firmus");
 		makeCantusFirmusItem.addActionListener (new ActionListener () {
 			public void actionPerformed (ActionEvent event) {
-				makeCantusFirmus();
+				makeCantusFirmus(true);
 			}
 		});
 		fileMenu.add(makeCantusFirmusItem);
+
+		JMenuItem makeFirstSpeciesCounterpointItem = new JMenuItem("Write a 2-part, first species counterpoint line");
+		makeFirstSpeciesCounterpointItem.addActionListener (new ActionListener () {
+			public void actionPerformed (ActionEvent event) {
+				makeFirstSpeciesCounterpoint();
+			}
+		});
+		fileMenu.add(makeFirstSpeciesCounterpointItem);
 
 		JMenuItem playEntryItem = new JMenuItem("Play current entry");
 		playEntryItem.addActionListener (new ActionListener () {
