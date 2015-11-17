@@ -252,7 +252,6 @@ class ImageFrame extends JFrame {
 	*/
 	public void makeFirstSpeciesCounterpoint () {
 		CantusFirmus cantusFirmus = makeCantusFirmus(false);
-		System.out.println("here");
 		TwoVoiceCounterpoint counterpoint = new TwoVoiceCounterpoint(cantusFirmus);
 		counterpoint.pseudoComposeFromScratch();
 		this.playerString = counterpoint.toString();

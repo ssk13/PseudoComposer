@@ -6,6 +6,7 @@
    	allow user to select range/mode
    	check for tritone outlines
    	check that there are more steps than skips
+   	go into cadence properly
 */
 
 import java.util.Random;
@@ -29,8 +30,6 @@ public class TwoVoiceCounterpoint {
 			this.notes[i][0] = new Note('q');
 			this.notes[i][1] = cantusFirmus.notes[i];
 		}
-		System.out.println("cantus firmus: ");
-		System.out.println(toString());
 	}
 
 	/*
@@ -77,7 +76,10 @@ public class TwoVoiceCounterpoint {
 
 			randVal = rand.nextInt(8);	//we're going to try every note possible for this line
 			while (attempts < 8 && !noteFound) {	//while we haven't tried every note and we haven't found the right note
-				if (isConsonant(notes[place][1].val, validNoteValues[randVal])) {
+				if (isConsonant(notes[place][1].val, validNoteValues[randVal]) && 
+					(isImperfectConsonance(notes[place][1].val, validNoteValues[randVal]) || 
+					 isContraryOrOblique(notes[place-1][0].val, notes[place-1][1].val, validNoteValues[randVal], notes[place][1].val))
+					) {
 					diff = notes[place - 1][0].val - validNoteValues[randVal];
 					if (diff == 0) {
 						//if it's the same note
@@ -123,8 +125,8 @@ public class TwoVoiceCounterpoint {
 		Returns whether 2 notes would be considered consonant in early 16th century counterpoint
 			(Unisons, thirds, fifths, and sixths are considered consonant)
 	*/
-	public boolean isConsonant (int note1, int note2) {
-		int diff = note2 - note1;
+	public boolean isConsonant (int tenor, int soprano) {
+		int diff = soprano - tenor;
 		boolean isConsonant = false;
 		switch (diff) {
 			case 0:
@@ -144,6 +146,49 @@ public class TwoVoiceCounterpoint {
 				break;
 		}
 		return isConsonant;
+	}
+
+	/*
+		Returns whether 2 notes would be considered imperfectly consonant in early 16th century counterpoint
+			(Thirds and sixths are considered consonant)
+	*/
+	public boolean isImperfectConsonance (int tenor, int soprano) {
+		int diff = soprano - tenor;
+		boolean isImperfectConsonance = false;
+		switch (diff) {
+			case 3:
+			case 4:
+			case 8:
+			case 9:
+			case 15:
+			case 16:
+				isImperfectConsonance = true;
+				break;
+			default:
+				isImperfectConsonance = false;
+				break;
+		}
+		return isImperfectConsonance;
+	}
+
+	/*
+		Returns whether the motion between 2 voices is contrary or oblique, as required for movement to a perfect consonance
+	*/
+	public boolean isContraryOrOblique (int prevSoprano, int prevTenor, int currSoprano, int currTenor) {
+		if (currSoprano - prevSoprano > 0) {
+			if (currTenor - prevTenor <= 0) {
+				return true;
+			}
+		} else if (currSoprano - prevSoprano == 0) {
+			if (currTenor - prevTenor != 0) {
+				return true;
+			}
+		} else if (currSoprano - prevSoprano < 0) {
+			if (currTenor - prevTenor >= 0) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/*
