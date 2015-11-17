@@ -5,19 +5,16 @@
    by Sarah Klein
 */
 
-import java.util.Random;
-
-public class CantusFirmus {
+public class CantusFirmus extends Counterpoint {
 	Note[] notes;	//Actual notes in the line
-	int numNotes;	//Number of notes in the cantus firmus
 	int[] validNoteValues = {26, 28, 29, 31, 33, 35, 36, 38};	//valid note values in our default mode
-	Random rand = new Random();
 
 	/*
 		Constructor
 		Creates the notes that will construct the cantus firmus, initialized to whole-note rests
 	*/
 	public CantusFirmus (int numNotes) {
+		super();
 		this.numNotes = numNotes;
 		this.notes = new Note[numNotes];
 		for (int i = 0; i != numNotes; ++i) {
@@ -38,9 +35,9 @@ public class CantusFirmus {
 			numberOfNoteRepetitions = 0,
 			valueOfRepeatedNote,
 			attempts,
-			counter = 0;
-		boolean previousMotionStepwise = true,
-			nextMotionStepwise = false,
+			counter = 0,
+			diff;
+		boolean nextMotionStepwise = false,
 			noteFound = false;
 
 		//fill the first note with either the tonic or the dominant
@@ -74,46 +71,32 @@ public class CantusFirmus {
 			noteFound = false;
 
 			while ((attempts < 8) && !noteFound) {
-				if (notes[place - 1].val == validNoteValues[randVal]) {
+				diff = notes[place - 1].val - validNoteValues[randVal];
+				if (diff == 0) {
 					//if it's the same note
 					if (numberOfNoteRepetitions != 2 && valueOfRepeatedNote != validNoteValues[randVal] && !nextMotionStepwise) {
-						notes[place++] = new Note(validNoteValues[randVal]);
-						numberOfSkips = 0;
-						numberOfNoteRepetitions++;
 						valueOfRepeatedNote = validNoteValues[randVal];
-						previousMotionStepwise = true;
 						noteFound = true;
 					}
-				} else if (notes[place - 1].val - validNoteValues[randVal] == 1 || notes[place - 1].val - validNoteValues[randVal] == 2 ||
-						   notes[place - 1].val - validNoteValues[randVal] == -2 || notes[place - 1].val - validNoteValues[randVal] == -1) {
+				} else if (diff == 1 || diff == 2 || diff == -2 || diff == -1) {
 					//if the motion is stepwise
-					notes[place++] = new Note(validNoteValues[randVal]);
-					numberOfSkips = 0;
-					numberOfNoteRepetitions = 0;
-					previousMotionStepwise = true;
-					nextMotionStepwise = false;
 					noteFound = true;
-				} else if (notes[place - 1].val - validNoteValues[randVal] == 3 || notes[place - 1].val - validNoteValues[randVal] == 4 ||
-						   notes[place - 1].val - validNoteValues[randVal] == -3 || notes[place - 1].val - validNoteValues[randVal] == -4) {
+				} else if (diff == 3 || diff == 4 || diff == -3 || diff == -4) {
 					if (numberOfSkips != 2 && !nextMotionStepwise) {
-						notes[place++] = new Note(validNoteValues[randVal]);
-						numberOfSkips++;
-						numberOfNoteRepetitions = 0;
-						previousMotionStepwise = false;
 						noteFound = true;
 					}
-				} else if (notes[place - 1].val - validNoteValues[randVal] == 5 || notes[place - 1].val - validNoteValues[randVal] == 7 ||
-						   notes[place - 1].val - validNoteValues[randVal] == 8 || notes[place - 1].val - validNoteValues[randVal] == 12 ||
-						   notes[place - 1].val - validNoteValues[randVal] == -5 || notes[place - 1].val - validNoteValues[randVal] == -7 ||
-						   notes[place - 1].val - validNoteValues[randVal] == -8 || notes[place - 1].val - validNoteValues[randVal] == -12) {
-					if (previousMotionStepwise) {
-						notes[place++] = new Note(validNoteValues[randVal]);
-						numberOfSkips++;
-						numberOfNoteRepetitions = 0;
-						previousMotionStepwise = false;
-						nextMotionStepwise = true;
+				} else if (diff == 5 || diff == 7 || diff == 8 || diff == 12 || diff == -5 || diff == -7 ||
+						   diff == -8 || diff == -12) {
+					if (numberOfSkips == 0) {
 						noteFound = true;
 					}
+				}
+
+				if (noteFound) {
+					notes[place++] = new Note(validNoteValues[randVal]);	//assign the note
+					numberOfSkips = (diff < 3 && diff > -3) ? 0 : numberOfSkips + 1;	//add a skip if we're skipping, otherwise reset
+					nextMotionStepwise = (diff > 4 || diff < -4) ? true : false;	//dictate next motion stepwise if it's a large leap
+					numberOfNoteRepetitions = (diff == 0) ? numberOfNoteRepetitions + 1 : 0; //increase number of repetitions of we're repeating
 				}
 
 				randVal = (randVal + 1) % 8;
@@ -122,8 +105,28 @@ public class CantusFirmus {
 					
 			if (noteFound == false) {
 				--place;
+				if (place < 0)
+					place = 0;
+			}
+
+			if (place == numNotes - 2) {
+				if (!voiceLeadingIntoCadenceIsValid()) {
+					place -= 2;
+				}
 			}
 		}
+	}
+
+	/*
+		Checks the voice leading  going into the cadence - returns true if valid
+	*/
+	public boolean voiceLeadingIntoCadenceIsValid() {
+		int prevNote = notes[numNotes - 3].val,
+			cadNote = notes[numNotes - 2].val;
+		if (isConsonantMelodically(prevNote, cadNote)) {
+			return true;
+		}
+		return false;
 	}
 
 	/*

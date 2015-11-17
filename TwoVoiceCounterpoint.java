@@ -2,27 +2,24 @@
 
    by Sarah Klein
    Future: implement soft rules
-   	avoid unisons in the middle of the composition
+   		avoid unisons in the middle of the composition
+   		check that there are more steps than skips
    	allow user to select range/mode
    	check for tritone outlines
-   	check that there are more steps than skips
    	go into cadence properly
 */
 
-import java.util.Random;
-
-public class TwoVoiceCounterpoint {
+public class TwoVoiceCounterpoint extends Counterpoint {
 	Note[][] notes;	//Actual notes in the line
-	int numNotes;	//Number of notes in the chord
 	int[] validNoteValues = {33, 35, 36, 38, 40, 41, 43, 45};	//valid note values in our default mode
 	CantusFirmus cantusFirmus;	//the cantus firmus of our composition
-	Random rand = new Random();
 
 	/*
 		Constructor
 		Creates the notes that will construct the composition, initialized to quarter-note rests
 	*/
 	public TwoVoiceCounterpoint (CantusFirmus cantusFirmus) {
+		super();
 		this.cantusFirmus = cantusFirmus;
 		this.numNotes = cantusFirmus.numNotes;
 		this.notes = new Note[numNotes][2];
@@ -76,7 +73,7 @@ public class TwoVoiceCounterpoint {
 
 			randVal = rand.nextInt(8);	//we're going to try every note possible for this line
 			while (attempts < 8 && !noteFound) {	//while we haven't tried every note and we haven't found the right note
-				if (isConsonant(notes[place][1].val, validNoteValues[randVal]) && 
+				if (isConsonantVertically(notes[place][1].val, validNoteValues[randVal]) && 
 					(isImperfectConsonance(notes[place][1].val, validNoteValues[randVal]) || 
 					 isContraryOrOblique(notes[place-1][0].val, notes[place-1][1].val, validNoteValues[randVal], notes[place][1].val))
 					) {
@@ -85,6 +82,7 @@ public class TwoVoiceCounterpoint {
 						//if it's the same note
 						if (numberOfNoteRepetitions != 2 && valueOfRepeatedNote != validNoteValues[randVal] && !nextMotionStepwise && notes[place - 1][1].val != notes[place][1].val) {
 							noteFound = true;
+							valueOfRepeatedNote = validNoteValues[randVal];	//keep track in case we get repetitive
 						}
 					} else if (diff == 1 || diff == 2 || diff == -2 || diff == -1) {
 						//if it's stepwise movement
@@ -103,7 +101,6 @@ public class TwoVoiceCounterpoint {
 
 					if (noteFound) {
 						notes[place++][0] = new Note(validNoteValues[randVal]);	//assign the note
-						valueOfRepeatedNote = validNoteValues[randVal];	//keep track in case we get repetitive
 						numberOfSkips = (diff < 3 && diff > -3) ? 0 : numberOfSkips + 1;	//add a skip if we're skipping, otherwise reset
 						nextMotionStepwise = (diff > 4 || diff < -4) ? true : false;	//dictate next motion stepwise if it's a large leap
 						numberOfNoteRepetitions = (diff == 0) ? numberOfNoteRepetitions + 1 : 0; //increase number of repetitions of we're repeating
@@ -118,75 +115,23 @@ public class TwoVoiceCounterpoint {
 				if (place < 0)
 					place = 0;
 			}
+
+			if (place == numNotes - 2) {
+				if (!voiceLeadingIntoCadenceIsValid()) {
+					place -= 2;
+				}
+			}
 		}
 	}
 
 	/*
-		Returns whether 2 notes would be considered consonant in early 16th century counterpoint
-			(Unisons, thirds, fifths, and sixths are considered consonant)
+		Checks the voice leading in the soprano line going into the cadence - returns true if valid
 	*/
-	public boolean isConsonant (int tenor, int soprano) {
-		int diff = soprano - tenor;
-		boolean isConsonant = false;
-		switch (diff) {
-			case 0:
-			case 3:
-			case 4:
-			case 7:
-			case 8:
-			case 9:
-			case 12:
-			case 15:
-			case 16:
-			case 19:
-				isConsonant = true;
-				break;
-			default:
-				isConsonant = false;
-				break;
-		}
-		return isConsonant;
-	}
-
-	/*
-		Returns whether 2 notes would be considered imperfectly consonant in early 16th century counterpoint
-			(Thirds and sixths are considered consonant)
-	*/
-	public boolean isImperfectConsonance (int tenor, int soprano) {
-		int diff = soprano - tenor;
-		boolean isImperfectConsonance = false;
-		switch (diff) {
-			case 3:
-			case 4:
-			case 8:
-			case 9:
-			case 15:
-			case 16:
-				isImperfectConsonance = true;
-				break;
-			default:
-				isImperfectConsonance = false;
-				break;
-		}
-		return isImperfectConsonance;
-	}
-
-	/*
-		Returns whether the motion between 2 voices is contrary or oblique, as required for movement to a perfect consonance
-	*/
-	public boolean isContraryOrOblique (int prevSoprano, int prevTenor, int currSoprano, int currTenor) {
-		if (currSoprano - prevSoprano > 0) {
-			if (currTenor - prevTenor <= 0) {
-				return true;
-			}
-		} else if (currSoprano - prevSoprano == 0) {
-			if (currTenor - prevTenor != 0) {
-				return true;
-			}
-		} else if (currSoprano - prevSoprano < 0) {
-			if (currTenor - prevTenor >= 0) {
-				return true;
-			}
+	public boolean voiceLeadingIntoCadenceIsValid() {
+		int prevSoprano = notes[numNotes - 3][0].val,
+			cadSoprano = notes[numNotes - 2][0].val;
+		if (isConsonantMelodically(prevSoprano, cadSoprano)) {
+			return true;
 		}
 		return false;
 	}
