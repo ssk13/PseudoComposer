@@ -1,7 +1,8 @@
-/* Represents a 'measure' of music
-   Each measure contains a monophonic line
+/* 
+	Measure.java
+   	Each measure contains a monophonic line
 
-   by Sarah Klein
+   	by Sarah Klein
 */
 
 import java.awt.*;

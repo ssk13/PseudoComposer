@@ -1,11 +1,12 @@
-/* Represents a musical note
-   Each contains a numerical value
+/* 
+	Note.java
+   	Each contains a numerical value
   		0 is a C, each additional int is another halfstep, 
   		with 60 being the maximum
   		-1 indicates that the note is a rest
-   Contains a char representing duration (q = quarter, e = eighth)
+    Contains a char representing duration (q = quarter, e = eighth)
 
-by Sarah Klein
+   	by Sarah Klein
 */
 
 public class Note {

@@ -1,7 +1,8 @@
-/* PseudoComposer.java
-   Composes a short piece based on a melodic motive, input from a user
+/* 
+	PseudoComposer.java
+   	Composes a short piece based on a melodic motive, input from a user
 
-   by Sarah Klein
+   	by Sarah Klein
 */
 
 import java.awt.*;
@@ -665,41 +666,3 @@ class ImageFrame extends JFrame {
 		this.playing = false;
 	}
 }
-
-
-	/*
-		Temporarily omitted - will reinclude potentially later but don't want to lose it!
-		Will write a prelude based on Bach's Prelude in his 1st cello suite
-		
-		public void makeSuitePrelude () {
-			int noteCount = this.entry.getNoteCount();
-			if (noteCount < this.minNotes)
-				playCheesyPrelude();
-			else {
-				composition = new SuiteMovement(entry, entry.getKey(), this.instrument);
-				composition.pseudoCompose();
-				this.playerString = composition.toString();
-				play();
-			}
-
-		public void playCheesyPrelude () {
-			this.playerString = "T60 g2s d3s b3s a3s b3s d3s b3s d3s g2s d3s b3s a3s b3s d3s b3s d3s " +  
-								"g2s e3s c4s b3s c4s e3s c4s e3s g2s e3s c4s b3s c4s e3s c4s e3s " + 
-								"g2s f#3s c4s b3s c4s f#3s c4s f#3s g2s f#3s c4s b3s c4s f#3s c4s f#3s " + 
-								"g2s g3s b3s a3s b3s g3s b3s g3s g2s g3s b3s a3s b3s g3s b3s g3s " + 
-								"g2s e3s b3s a3s b3s g3s f#3s g3s e3s g3s f#3s g3s b2s d3s c#3s b2s " + 
-								"c#3s g3s a3s g3s a3s g3s a3s g3s c#3s g3s a3s g3s a3s g3s a3s g3s " + 
-								"f#3s a3s d4s c#4s d4s a3s g3s a3s f#3s a3s g3s a3s d3s f#3s e3s d3s " + 
-								"e2s b2s g3s f#3s g3s b2s g3s b2s e2s b2s g3s f#3s g3s b2s g3s b2s " +
-								"e2s c#3s d3s e3s d3s c#3s b2s a2s g3s f#3s e3s d4s c#4s b3s a3s g3s " + 
-								"f#3s e3s d3s d4s a3s d4s f#3s a3s d3s e3s f#3s a3s g3s f#3s e3s d3s " + 
-								"g#3s d3s f3s e3s f3s d3s g#3s d3s b3s d3s f3s e3s f3s d3s g#3s d3s " +
-								"c3s e3s a3s b3s c4s a3s e3s d3s c3s e3s a3s b3s c4s a3s f#3s e3s " + 
-								"d#3s f#3s d#3s f#3s a3s f#3s a3s f#3s d#3s f#3s d#3s f#3s a3s f#3s a3s f#3s " + 
-								"g3s f#3s e3s g3s f#3s g3s a3s f#3s g3s f#3s e3s d3s T50 c3s T40 b2s T30 a2s T20 g2s";
-			play();
-			String disc = "I'm going to need a few more notes than that to work with...";
-			this.disclaimer.showMessageDialog(this, disc);	
-		}
-
-	}*/
