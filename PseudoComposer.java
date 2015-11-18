@@ -209,6 +209,56 @@ class ImageFrame extends JFrame {
 	}
 
 	/*
+		Writes a cantus firmus from scratch
+		Asks user for:
+			length
+			[future:
+				range
+				mode (1-8)]
+	*/
+	public CantusFirmus makeCantusFirmus (boolean play) {
+		int length;
+		Boolean trying = true;
+		CantusFirmus cantusFirmus = null;
+
+		String stringVal = JOptionPane.showInputDialog("How long should your cantus firmus be (in whole notes)?");
+
+		while (trying) {
+			try {
+				length = Integer.parseInt(stringVal);
+				if (length < 1)
+					throw new IllegalArgumentException();
+				trying = false;
+				cantusFirmus = new CantusFirmus(length);
+				cantusFirmus.pseudoComposeFromScratch();
+
+				this.playerString = cantusFirmus.toString();
+				if (play)
+					play();
+			}
+			catch (NumberFormatException e) {
+				stringVal = JOptionPane.showInputDialog("No, a positive number");
+			}
+			catch (IllegalArgumentException e) {
+				stringVal = JOptionPane.showInputDialog("No, a positive number");
+			}
+		}
+
+		return cantusFirmus;
+	}
+
+	/*
+		Writes a 2-voice first-species counterpoint composition of a user-given length
+	*/
+	public void makeFirstSpeciesCounterpoint () {
+		CantusFirmus cantusFirmus = makeCantusFirmus(false);
+		TwoVoiceCounterpoint counterpoint = new TwoVoiceCounterpoint(cantusFirmus);
+		counterpoint.pseudoComposeFromScratch();
+		this.playerString = counterpoint.toString();
+		play();
+	}
+
+	/*
 		Accesses a .txt file from the user's local machine, which should contain a valid PlayerString for the player
 		Future: allow MusicXML to be converted into a JFugue PlayerString
 	*/
@@ -248,14 +298,20 @@ class ImageFrame extends JFrame {
 		Writes a chorale based on the entry - most of this logic is in Chorale.java,
 		plays that composition
 	*/
-	public void makeChorale () {
+	public void makeChorale (boolean hasEntry) {
 		int noteCount = this.entry.getNoteCount();
 		//don't write anything if you don't have enough notes because what's the point
-		if (noteCount < this.minNotes)
+		if (noteCount < this.minNotes && hasEntry)
 			playCheesyToccata();
 		else {
-			composition = new Chorale(entry, entry.getKey());
-			composition.pseudoCompose();
+			if (hasEntry) {
+				composition = new Chorale(entry, entry.getKey());
+				composition.pseudoCompose();
+			}
+			else {
+				composition = new Chorale();
+				composition.pseudoComposeFromScratch();
+			}
 			this.playerString = composition.toString();
 			play();
 		}
@@ -504,6 +560,22 @@ class ImageFrame extends JFrame {
 	public void setUpMenu () {
 		JMenu fileMenu = new JMenu("Options");
 
+		JMenuItem makeCantusFirmusItem = new JMenuItem("Write cantus firmus");
+		makeCantusFirmusItem.addActionListener (new ActionListener () {
+			public void actionPerformed (ActionEvent event) {
+				makeCantusFirmus(true);
+			}
+		});
+		fileMenu.add(makeCantusFirmusItem);
+
+		JMenuItem makeFirstSpeciesCounterpointItem = new JMenuItem("Write a 2-part, first species counterpoint line");
+		makeFirstSpeciesCounterpointItem.addActionListener (new ActionListener () {
+			public void actionPerformed (ActionEvent event) {
+				makeFirstSpeciesCounterpoint();
+			}
+		});
+		fileMenu.add(makeFirstSpeciesCounterpointItem);
+
 		JMenuItem playEntryItem = new JMenuItem("Play current entry");
 		playEntryItem.addActionListener (new ActionListener () {
 			public void actionPerformed (ActionEvent event) {
@@ -515,10 +587,18 @@ class ImageFrame extends JFrame {
 		JMenuItem composeChoraleItem = new JMenuItem("Compose chorale");
 		composeChoraleItem.addActionListener (new ActionListener () {
 			public void actionPerformed (ActionEvent event) {
-				makeChorale();
+				makeChorale(true);
 			}
 		});
 		fileMenu.add(composeChoraleItem);
+
+		JMenuItem composeChoraleFromScratchItem = new JMenuItem("Compose chorale from scratch");
+		composeChoraleFromScratchItem.addActionListener (new ActionListener () {
+			public void actionPerformed (ActionEvent event) {
+				makeChorale(false);
+			}
+		});
+		fileMenu.add(composeChoraleFromScratchItem);
 
 		fileMenu.add(setUpInstrumentChoices());
 

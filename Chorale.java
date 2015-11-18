@@ -51,6 +51,15 @@ public class Chorale {
 	}
 
 	/*
+		Constructor for a chorale made without an entry
+		Key is C major by default
+	*/
+	public Chorale () {
+		this.tonic = new Note(12);
+		this.major = true;
+	}
+
+	/*
 		Creates the chorale!
 		Prints the key,
 		initializes the map by which we do the voice-leading
@@ -77,7 +86,7 @@ public class Chorale {
 		this.chords[0] = new Chord(4,'q');
 		//The top voice of the first chord is the first note in the entry measure
 		this.chords[0].notes[0] = new Note(entry.notes[0], 'q');
-		fillFirstChord();
+		fillFirstChordForChoraleWithEntry();
 		for (int i = 1; i != this.chordCount; ++i) {
 			this.chords[i] = new Chord(4,'q');
 			//if we're still harmonizing, only fill the bottom 3 voices
@@ -90,6 +99,31 @@ public class Chorale {
 				fillInnerVoices(i,0,4);
 		}	
 		fillLastChord();	
+		putInProperOctaves();
+	}
+
+	public void pseudoComposeFromScratch() {
+		System.out.println("C major");
+		initializeInnerVoiceHashMap();
+		this.chords = new Chord[this.chordCount];
+		fillChordsArray();
+		printChords();
+		//The first chord has 4 quarter notes
+		this.chords[0] = new Chord(4,'q');
+		fillFirstChordForChoraleWithoutEntry();
+		//for (int i = 1; i != this.chordCount; ++i) {
+		//	this.chords[i] = new Chord(4,'q');
+		//	//if we're still harmonizing, only fill the bottom 3 voices
+		//	if (i < entry.noteCount) {
+		//		this.chords[i].notes[0] = new Note(entry.notes[i], 'q');
+		//		fillInnerVoices(i, 1, 4);
+		//	}
+		//	//otherwise, fill all 4 voices
+		//	else
+		//		fillInnerVoices(i,0,4);
+		//}	
+		//fillLastChord();	
+		this.chordCount = 1;	//	REMOVE THIS!
 		putInProperOctaves();
 	}
 
@@ -145,9 +179,9 @@ public class Chorale {
 	}
 
 	/*
-		Picks a chord progression for our chorale by finding a valid path with a ChordTree
-		for the given entry, and then picking next chords pseudorandomly until it gets to
-		the cadence, at which point it resolves with dominant-tonic motion
+		Picks a chord progression for our chorale by finding a valid path that properly 
+		harmonizes our entry with a ChordTree, and then picking next chords pseudorandomly 
+		until it gets to the cadence, at which point it resolves with dominant-tonic motion
 	*/
 	public void fillChordsArray (int numNotes) {
 		ChordTree path = new ChordTree(1, numNotes, null);
@@ -175,9 +209,40 @@ public class Chorale {
 	}
 
 	/*
+		Picks a chord progression for our chorale by finding a valid path with a ChordTree
+		and then picking next chords pseudorandomly until it gets to the cadence, at which 
+		point it resolves with dominant-tonic motion
+	*/
+	public void fillChordsArray () {
+		ChordTree path = new ChordTree(1, 0, null);
+		int here = 1, 
+			counting = 0, 
+			preCadencePlace = this.chordCount - 5;
+		this.chordValues = new int[this.chordCount];
+		//start with a I/i chord
+		this.chordValues[0] = 1;
+
+		while (here < this.chordCount-4) {
+			this.chordValues[here] = getNextChord(this.chordValues[here - 1]);
+			++here;
+		}
+		
+		if ((this.chordValues[preCadencePlace] == 7) || (this.chordValues[preCadencePlace] == 5))
+			this.chordValues[preCadencePlace + 1] = 1;
+		else
+			this.chordValues[preCadencePlace + 1] = getPredominant();
+		this.chordValues[preCadencePlace + 2] = getPredominantOrDominant();
+		this.chordValues[preCadencePlace + 3] = getDominant();
+		this.chordValues[preCadencePlace + 4] = 1;
+
+		if (counting == 200)
+			System.out.println("infinite looped - check your Chorale.java fillChorsAray code!");
+	}
+
+	/*
 		Initializes the first chord with 2 tonics, a 3rd, and a 5th
 	*/
-	public void fillFirstChord () {
+	public void fillFirstChordForChoraleWithEntry () {
 		int majorVal = (this.major ? 1 : 0), 
 			randVal = this.rand.nextInt(2),
 			interval;
@@ -207,7 +272,47 @@ public class Chorale {
 				this.chords[0].notes[0].transpose(3 + majorVal);
 			else if (randVal == 1)
 				this.chords[0].notes[0].transpose(-5);
-			fillFirstChord();
+			fillFirstChordForChoraleWithEntry();
+		}
+	}
+
+	/*
+		Initializes the first chord with a tonic, a third, and 2 more notes that are either a
+		tonic, a third, or a 5th - does not guarantee root position or all chord members
+	*/
+	public void fillFirstChordForChoraleWithoutEntry () {
+		System.out.println("tonic: " + this.tonic);
+		Boolean[] voicesNeedingToBeFilled = {true, true, true, true};
+		Boolean trying = true;
+		int voiceToFill = rand.nextInt(4),
+			noteToFillWith = rand.nextInt(3);
+		
+		// put a tonic in that bad boy
+		this.chords[0].notes[voiceToFill] = new Note(this.tonic, 'q');
+		voicesNeedingToBeFilled[voiceToFill] = false;
+
+		//put a third in there
+		while (trying) {
+			voiceToFill = rand.nextInt(4);
+			if (voicesNeedingToBeFilled[voiceToFill]) {
+				this.chords[0].notes[voiceToFill] = new Note(this.tonic);
+				this.chords[0].notes[voiceToFill].transpose(4);
+				voicesNeedingToBeFilled[voiceToFill] = false;
+				trying = false;
+			}
+		}
+
+		for (int i = 0; i != 4; ++i) {
+			if (voicesNeedingToBeFilled[i]) {
+				this.chords[0].notes[i] = new Note(this.tonic);
+				noteToFillWith = rand.nextInt(6);
+				if (noteToFillWith < 1) {
+					this.chords[0].notes[i].transpose(4);
+				}
+				else if (noteToFillWith < 4) {
+					this.chords[0].notes[i].transpose(7);
+				}
+			}
 		}
 	}
 
