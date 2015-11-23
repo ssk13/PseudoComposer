@@ -1,9 +1,10 @@
-/* Represents a 4-voice chorale in the style of JS Bach
+/* 
+	Chorale.java
+   	Composes a 4-voice chorale in the style of JS Bach
+   		future: add passing tones
 
-   by Sarah Klein
-   FUTURE
-   add passing tones
- */
+   	by Sarah Klein
+*/
 
 import java.util.HashMap;
 import java.util.Random;

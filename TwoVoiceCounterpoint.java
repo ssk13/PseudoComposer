@@ -1,12 +1,18 @@
-/* Represents a 2-voice, contrapuntal composition
-
+/* 
    by Sarah Klein
-   Future: implement soft rules
-   		avoid unisons in the middle of the composition
-   		check that there are more steps than skips
-   	allow user to select range/mode
-   	check for tritone outlines
-   	go into cadence properly
+  
+*/
+/* 
+	TwoVoiceCounterpoint.java
+   	Represents a 2-voice, contrapuntal composition
+		 future: 
+		 	implement soft rules
+   				avoid unisons in the middle of the composition
+   				check that there are more steps than skips
+   			allow user to select range/mode
+   			check for tritone outlines
+
+   	by Sarah Klein
 */
 
 public class TwoVoiceCounterpoint extends Counterpoint {

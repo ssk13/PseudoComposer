@@ -1,5 +1,8 @@
-/*
-	Base class for all of our later counterpoint classes
+/* 
+	Counterpoint.java
+    Base class for all of our later counterpoint classes
+
+   	by Sarah Klein
 */
 
 import java.util.Random;

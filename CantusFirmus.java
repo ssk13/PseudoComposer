@@ -1,9 +1,11 @@
-/* Represents a cantus firmus, which contains a monophonic line of notes, defaultedly in
-	d-dorian mode
-	future: add more modes
+/* 
+	CantusFirmus.java
+   	Represents a cantus firmus, which contains a monophonic line of notes, defaultedly in d-dorian mode
+		future: add more mode
 
-   by Sarah Klein
+   	by Sarah Klein
 */
+
 
 public class CantusFirmus extends Counterpoint {
 	Note[] notes;	//Actual notes in the line

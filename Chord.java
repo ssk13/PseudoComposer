@@ -1,6 +1,8 @@
-/* Represents a chord, which contains a number of notes and has a duration
+/* 
+	Chord.java
+   	Represents a chord, which contains a number of notes and has a duration
 
-   by Sarah Klein
+   	by Sarah Klein
 */
 
 public class Chord {
