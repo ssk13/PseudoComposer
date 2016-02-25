@@ -253,8 +253,19 @@ class ImageFrame extends JFrame {
 	*/
 	public void makeFirstSpeciesCounterpoint () {
 		CantusFirmus cantusFirmus = makeCantusFirmus(false);
-		TwoVoiceCounterpoint counterpoint = new TwoVoiceCounterpoint(cantusFirmus);
+		TwoVoiceCounterpoint counterpoint = new TwoVoiceCounterpoint(cantusFirmus, 1);
 		counterpoint.pseudoComposeFromScratchInFirstSpecies();
+		this.playerString = counterpoint.toString();
+		play();
+	}
+
+	/*
+		Writes a 2-voice second-species counterpoint composition of a user-given length
+	*/
+	public void makeSecondSpeciesCounterpoint () {
+		CantusFirmus cantusFirmus = makeCantusFirmus(false);
+		TwoVoiceCounterpoint counterpoint = new TwoVoiceCounterpoint(cantusFirmus, 2);
+		counterpoint.pseudoComposeFromScratchInSecondSpecies();
 		this.playerString = counterpoint.toString();
 		play();
 	}
@@ -576,6 +587,14 @@ class ImageFrame extends JFrame {
 			}
 		});
 		fileMenu.add(makeFirstSpeciesCounterpointItem);
+
+		JMenuItem makeSecondSpeciesCounterpointItem = new JMenuItem("Write a 2-part, second species counterpoint line");
+		makeSecondSpeciesCounterpointItem.addActionListener (new ActionListener () {
+			public void actionPerformed (ActionEvent event) {
+				makeSecondSpeciesCounterpoint();
+			}
+		});
+		fileMenu.add(makeSecondSpeciesCounterpointItem);
 
 		JMenuItem playEntryItem = new JMenuItem("Play current entry");
 		playEntryItem.addActionListener (new ActionListener () {
