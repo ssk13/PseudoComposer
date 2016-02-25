@@ -254,7 +254,7 @@ class ImageFrame extends JFrame {
 	public void makeFirstSpeciesCounterpoint () {
 		CantusFirmus cantusFirmus = makeCantusFirmus(false);
 		TwoVoiceCounterpoint counterpoint = new TwoVoiceCounterpoint(cantusFirmus);
-		counterpoint.pseudoComposeFromScratch();
+		counterpoint.pseudoComposeFromScratchInFirstSpecies();
 		this.playerString = counterpoint.toString();
 		play();
 	}

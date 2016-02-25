@@ -36,10 +36,10 @@ public class TwoVoiceCounterpoint extends Counterpoint {
 	}
 
 	/*
-	Writes a line of first species counterpoint above a given cantus firmus
-	future: 
+		Writes a line of first species counterpoint above a given cantus firmus
+		future: 
 	*/
-	public void pseudoComposeFromScratch() {
+	public void pseudoComposeFromScratchInFirstSpecies() {
 		int place = 0,
 			randVal = rand.nextInt(3),
 			numberOfSkips = 0, 
