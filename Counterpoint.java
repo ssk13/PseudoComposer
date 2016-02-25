@@ -18,6 +18,7 @@ public class Counterpoint {
 	/*
 		Returns whether 2 notes would be considered consonant melodically in early 16th century counterpoint
 			(Unisons, steps (no ascending half step), thirds, perfect fourths, perfect fifths, sixths (minor ascending), octaves)
+			future: add a secondary check for complex intervals (augmented 5th, for example)
 	*/
 	public boolean isConsonantMelodically (int firstNote, int secondNote) {
 		int diff = secondNote - firstNote;
@@ -45,6 +46,16 @@ public class Counterpoint {
 				break;
 		}
 		return isConsonant;
+	}
+
+	public boolean isApproachedFromOppositeDirection (int firstNote, int secondNote, int thirdNote) {
+		if (secondNote > firstNote && secondNote > thirdNote) {
+			return true;
+		}
+		if (secondNote < firstNote && secondNote < thirdNote) {
+			return true;
+		}
+		return false;
 	}
 
 	/*

@@ -1,7 +1,8 @@
 /* 
 	CantusFirmus.java
    	Represents a cantus firmus, which contains a monophonic line of notes, defaultedly in d-dorian mode
-		future: add more mode
+		future: add more modes
+			prevent slow trill
 
    	by Sarah Klein
 */
@@ -39,7 +40,7 @@ public class CantusFirmus extends Counterpoint {
 			attempts,
 			counter = 0,
 			diff;
-		boolean nextMotionStepwise = false,
+		boolean nextMotionSmallAndOppositeDirection = false,
 			noteFound = false;
 
 		//fill the first note with either the tonic or the dominant
@@ -76,28 +77,47 @@ public class CantusFirmus extends Counterpoint {
 				diff = notes[place - 1].val - validNoteValues[randVal];
 				if (diff == 0) {
 					//if it's the same note
-					if (numberOfNoteRepetitions != 2 && valueOfRepeatedNote != validNoteValues[randVal] && !nextMotionStepwise) {
+					if (numberOfNoteRepetitions != 2 && valueOfRepeatedNote != validNoteValues[randVal] && !nextMotionSmallAndOppositeDirection) {
 						valueOfRepeatedNote = validNoteValues[randVal];
 						noteFound = true;
 					}
 				} else if (diff == 1 || diff == 2 || diff == -2 || diff == -1) {
 					//if the motion is stepwise
-					noteFound = true;
-				} else if (diff == 3 || diff == 4 || diff == -3 || diff == -4) {
-					if (numberOfSkips != 2 && !nextMotionStepwise) {
+					if (place > 1) {
+						if (!nextMotionSmallAndOppositeDirection || isApproachedFromOppositeDirection(notes[place-2].val, notes[place-1].val, validNoteValues[randVal])) {
+							noteFound = true;
+						}
+					} else {
 						noteFound = true;
+					}
+				} else if (diff == 3 || diff == 4 || diff == -3 || diff == -4) {
+					if (numberOfSkips != 2) {
+						if (place > 1) {
+							if (!nextMotionSmallAndOppositeDirection || isApproachedFromOppositeDirection(notes[place-2].val, notes[place-1].val, validNoteValues[randVal])) {
+								noteFound = true;
+							}
+						}
+						else {
+							noteFound = true;
+						}
 					}
 				} else if (diff == 5 || diff == 7 || diff == 8 || diff == 12 || diff == -5 || diff == -7 ||
 						   diff == -8 || diff == -12) {
 					if (numberOfSkips == 0) {
-						noteFound = true;
+						if (place > 1) {
+							if (isApproachedFromOppositeDirection(notes[place-2].val, notes[place-1].val, validNoteValues[randVal])) {
+								noteFound = true;
+							}
+						} else {
+							noteFound = true;
+						}
 					}
 				}
 
 				if (noteFound) {
 					notes[place++] = new Note(validNoteValues[randVal]);	//assign the note
 					numberOfSkips = (diff < 3 && diff > -3) ? 0 : numberOfSkips + 1;	//add a skip if we're skipping, otherwise reset
-					nextMotionStepwise = (diff > 4 || diff < -4) ? true : false;	//dictate next motion stepwise if it's a large leap
+					nextMotionSmallAndOppositeDirection = (diff > 4 || diff < -4) ? true : false;	//dictate next motion small and leaving in opposite direction if it's a large leap
 					numberOfNoteRepetitions = (diff == 0) ? numberOfNoteRepetitions + 1 : 0; //increase number of repetitions of we're repeating
 				}
 
@@ -112,7 +132,7 @@ public class CantusFirmus extends Counterpoint {
 			}
 
 			if (place == numNotes - 2) {
-				if (!voiceLeadingIntoCadenceIsValid()) {
+				if (!voiceLeadingIntoCadenceIsValid(nextMotionSmallAndOppositeDirection, (numberOfSkips == 2))) {
 					place -= 2;
 				}
 			}
@@ -122,11 +142,29 @@ public class CantusFirmus extends Counterpoint {
 	/*
 		Checks the voice leading  going into the cadence - returns true if valid
 	*/
-	public boolean voiceLeadingIntoCadenceIsValid() {
+	public boolean voiceLeadingIntoCadenceIsValid(boolean mustLeaveInOppositeDirection, boolean mustBeStepwise) {
 		int prevNote = notes[numNotes - 3].val,
-			cadNote = notes[numNotes - 2].val;
-		if (isConsonantMelodically(prevNote, cadNote)) {
-			return true;
+			cadNote = notes[numNotes - 2].val,
+			finalNote = notes[numNotes - 1].val;
+
+		if (mustBeStepwise) {
+			if (cadNote - prevNote > 2 || prevNote - cadNote > 2) {
+				return false;
+			}
+		}
+		if (isConsonantMelodically(prevNote, cadNote) && 
+			(!mustLeaveInOppositeDirection || isApproachedFromOppositeDirection(prevNote, cadNote, finalNote))) {
+			if (cadNote - prevNote > 4) {
+				if (finalNote - cadNote < 0)
+					return true;
+			} else if (prevNote - cadNote > 4) {
+				if (finalNote - cadNote > 0) {
+					return true;
+				}
+			}
+			else {
+				return true;	
+			}
 		}
 		return false;
 	}
