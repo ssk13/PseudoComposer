@@ -9,6 +9,7 @@ import java.util.Random;
 
 public class Counterpoint {
 	int numNotes;	//Number of notes in the chord
+	int species;
 	Random rand = new Random();
 	
 	public Counterpoint() {
