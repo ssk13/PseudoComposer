@@ -10,6 +10,7 @@
    				check that there are more steps than skips
    			allow user to select range/mode
    			check for tritone outlines
+   			Make sure first interval is perfect
 
    	by Sarah Klein
 */
