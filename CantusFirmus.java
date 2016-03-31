@@ -3,6 +3,7 @@
    	Represents a cantus firmus, which contains a monophonic line of notes, defaultedly in d-dorian mode
 		future: add more modes
 			prevent slow trill
+			make minimum length 4 notes
 
    	by Sarah Klein
 */
@@ -36,24 +37,12 @@ public class CantusFirmus extends Counterpoint {
 			randVal = rand.nextInt(3),
 			numberOfSkips = 0, 
 			numberOfNoteRepetitions = 0,
-			valueOfRepeatedNote,
+			valueOfRepeatedNote = -1,
 			attempts,
 			counter = 0,
-			diff;
+			diff = 0;
 		boolean nextMotionSmallAndOppositeDirection = false,
 			noteFound = false;
-
-		//fill the first note with either the tonic or the dominant
-		if (randVal == 0) {
-			 notes[place++] = new Note(validNoteValues[0]);
-			 valueOfRepeatedNote = validNoteValues[0];
-		} else if (randVal == 1) {
-			notes[place++] = new Note(validNoteValues[4]);
-			valueOfRepeatedNote = validNoteValues[4];
-		} else {
-			notes[place++] = new Note(validNoteValues[7]);
-			valueOfRepeatedNote = validNoteValues[7];
-		}
 
 		//put tonic in the last space and the appropriate pentultimate note
 		randVal = rand.nextInt(2);
@@ -74,42 +63,55 @@ public class CantusFirmus extends Counterpoint {
 			noteFound = false;
 
 			while ((attempts < 8) && !noteFound) {
-				diff = notes[place - 1].val - validNoteValues[randVal];
-				if (diff == 0) {
-					//if it's the same note
-					if (numberOfNoteRepetitions != 2 && valueOfRepeatedNote != validNoteValues[randVal] && !nextMotionSmallAndOppositeDirection) {
-						valueOfRepeatedNote = validNoteValues[randVal];
-						noteFound = true;
+				if (place == 0) {
+					//fill the first note with either the tonic or the dominant
+					if (randVal == 0) {
+						 notes[place] = new Note(validNoteValues[0]);
+					} else if (randVal == 1) {
+						notes[place] = new Note(validNoteValues[4]);
+					} else {
+						notes[place] = new Note(validNoteValues[7]);
 					}
-				} else if (diff == 1 || diff == 2 || diff == -2 || diff == -1) {
-					//if the motion is stepwise
-					if (place > 1) {
-						if (!nextMotionSmallAndOppositeDirection || isApproachedFromOppositeDirection(notes[place-2].val, notes[place-1].val, validNoteValues[randVal])) {
+					valueOfRepeatedNote = notes[0].val;
+					noteFound = true;
+				}  else {
+					diff = notes[place - 1].val - validNoteValues[randVal];
+					if (diff == 0) {
+						//if it's the same note
+						if (numberOfNoteRepetitions != 2 && valueOfRepeatedNote != validNoteValues[randVal] && !nextMotionSmallAndOppositeDirection) {
+							valueOfRepeatedNote = validNoteValues[randVal];
 							noteFound = true;
 						}
-					} else {
-						noteFound = true;
-					}
-				} else if (diff == 3 || diff == 4 || diff == -3 || diff == -4) {
-					if (numberOfSkips != 2) {
+					} else if (diff == 1 || diff == 2 || diff == -2 || diff == -1) {
+						//if the motion is stepwise
 						if (place > 1) {
 							if (!nextMotionSmallAndOppositeDirection || isApproachedFromOppositeDirection(notes[place-2].val, notes[place-1].val, validNoteValues[randVal])) {
 								noteFound = true;
 							}
-						}
-						else {
-							noteFound = true;
-						}
-					}
-				} else if (diff == 5 || diff == 7 || diff == 8 || diff == 12 || diff == -5 || diff == -7 ||
-						   diff == -8 || diff == -12) {
-					if (numberOfSkips == 0) {
-						if (place > 1) {
-							if (isApproachedFromOppositeDirection(notes[place-2].val, notes[place-1].val, validNoteValues[randVal])) {
-								noteFound = true;
-							}
 						} else {
 							noteFound = true;
+						}
+					} else if (diff == 3 || diff == 4 || diff == -3 || diff == -4) {
+						if (numberOfSkips != 2) {
+							if (place > 1) {
+								if (!nextMotionSmallAndOppositeDirection || isApproachedFromOppositeDirection(notes[place-2].val, notes[place-1].val, validNoteValues[randVal])) {
+									noteFound = true;
+								}
+							}
+							else {
+								noteFound = true;
+							}
+						}
+					} else if (diff == 5 || diff == 7 || diff == 8 || diff == 12 || diff == -5 || diff == -7 ||
+							   diff == -8 || diff == -12) {
+						if (numberOfSkips == 0) {
+							if (place > 1) {
+								if (isApproachedFromOppositeDirection(notes[place-2].val, notes[place-1].val, validNoteValues[randVal])) {
+									noteFound = true;
+								}
+							} else {
+								noteFound = true;
+							}
 						}
 					}
 				}
