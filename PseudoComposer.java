@@ -402,13 +402,8 @@ class ImageFrame extends JFrame {
 		with instructions or a file format *choice*
 	*/
 	public void save () {
-		try {
-			PrintWriter transcriber = new PrintWriter("PseudoComposition.txt", "UTF-8");
-			transcriber.println(this.composition.toString());
-			transcriber.close();
-		}
-		catch (IOException e) {
-		}
+		MusicXMLWriter writer = new MusicXMLWriter();
+		writer.write(this.playerString);
 	}
 
 	/*
