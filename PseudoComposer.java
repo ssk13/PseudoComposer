@@ -271,6 +271,17 @@ class ImageFrame extends JFrame {
 	}
 
 	/*
+		Writes a 2-voice second-species counterpoint composition of a user-given length
+	*/
+	public void makeThirdSpeciesCounterpoint () {
+		CantusFirmus cantusFirmus = makeCantusFirmus(false);
+		TwoVoiceCounterpoint counterpoint = new TwoVoiceCounterpoint(cantusFirmus, 3);
+		counterpoint.pseudoComposeFromScratchInThirdSpecies();
+		this.playerString = counterpoint.toString();
+		play();
+	}
+
+	/*
 		Accesses a .txt file from the user's local machine, which should contain a valid PlayerString for the player
 		Future: allow MusicXML to be converted into a JFugue PlayerString
 	*/
@@ -590,6 +601,14 @@ class ImageFrame extends JFrame {
 			}
 		});
 		fileMenu.add(makeSecondSpeciesCounterpointItem);
+
+		JMenuItem makeThirdSpeciesCounterpointItem = new JMenuItem("Write a 2-part, third species counterpoint line");
+		makeThirdSpeciesCounterpointItem.addActionListener (new ActionListener () {
+			public void actionPerformed (ActionEvent event) {
+				makeThirdSpeciesCounterpoint();
+			}
+		});
+		fileMenu.add(makeThirdSpeciesCounterpointItem);
 
 		JMenuItem playEntryItem = new JMenuItem("Play current entry");
 		playEntryItem.addActionListener (new ActionListener () {
