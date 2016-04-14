@@ -33,6 +33,7 @@ public class PseudoComposer {
 			public void run() {
 				JFrame frame = new ImageFrame (WIDTH, HEIGHT);
 				frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+				frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
 				frame.setVisible(true);
 			}
 		});
@@ -47,24 +48,39 @@ class ImageFrame extends JFrame {
 	//visual application components
 	private final JFileChooser chooser;
 	JPanel appPanel;
-	ImageIcon icon;
-	JLabel label;
-	BufferedImage image;
-	int measureWidth = 460, 
-		measureHeight = 169;
+	JLabel directions;
+	JLabel buttons;
+	JLabel background;
+	JLabel musicFrame;
+	JRadioButton cantusFirmusButton;
+	JRadioButton counterpointInFirstSpeciesButton;
+	JRadioButton counterpointInSecondSpeciesButton;
+	JRadioButton counterpointInThirdSpeciesButton;
+	JButton pseudoComposeButton;
+	ButtonGroup composeButtons;
+
+	//style variables
+	String fontName = "Helvetica";
+
+	//for drawing measures
+	BufferedImage[] measures;
+	ImageIcon[] measureIcons;
+	JLabel[] measureLabels;
+	Graphics2D g2d;
+	BufferedImage clef;	
+	GridBagConstraints gridBagConstraints;
 
 	//disclaimer that explains the application
 	JOptionPane disclaimer;
 
 	//program components
-	Measure entry;
-	Chorale composition;
 	Boolean playing = false;
 	Player player = new Player();
 	String playerString = "";
 	String instrument = "ACOUSTIC_GRAND"; 
 	int tempo = 120, 
 		minNotes = 3;	//minimum number of notes needed to composer a work
+	CantusFirmus cantusFirmus;
 
 	/*
 		Constructor
@@ -84,8 +100,6 @@ class ImageFrame extends JFrame {
 	/*
 		Initializes all of the components of the JFrame (the JPanels),
 		creates the JOptionPane for the disclaimer
-		creates the 'entry' measure in which users can enter notes,
-		draws the entry,
 		sets up the menus,
 		adds the mouse listeners
 		sets up the images,
@@ -93,120 +107,145 @@ class ImageFrame extends JFrame {
 	*/
 	public void initialize () {
 		// set up the appPanel's layout and create the disclaimer
-		this.appPanel = new JPanel(new BorderLayout());
+		this.appPanel = new JPanel(new CardLayout());
 		getContentPane().add(this.appPanel);
 		this.disclaimer = new JOptionPane();
+		this.background = new JLabel(new ImageIcon("background.jpg"));
+		this.directions = new JLabel("Hello - I am your PseudoComposer! What would you like me to 'compose' for you?", SwingConstants.CENTER);
+		directions.setFont(new Font(fontName, Font.PLAIN, 24));
 
-		this.entry = new Measure();
-		this.entry.drawMeasure();
-		this.image = new BufferedImage(measureWidth, measureHeight, BufferedImage.TYPE_INT_ARGB);
-		this.icon = new ImageIcon(this.image);
-		this.label = new JLabel(this.icon);
-		this.label.setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
-
-		addMouseListeners();
 		setUpMenu();
-		this.appPanel.add(label, BorderLayout.PAGE_START);
 
-		// paint our initial entry
-		displayMeasure(this.entry);
+		this.composeButtons = new ButtonGroup();
+		this.cantusFirmusButton = new JRadioButton("Compose a canuts firmus");
+		this.cantusFirmusButton.setOpaque(false);
+		this.cantusFirmusButton.setContentAreaFilled(false);
+		this.counterpointInFirstSpeciesButton = new JRadioButton("Compose first species counterpoint");
+		this.counterpointInFirstSpeciesButton.setOpaque(false);
+		this.counterpointInFirstSpeciesButton.setContentAreaFilled(false);
+		this.counterpointInSecondSpeciesButton = new JRadioButton("Compose second species");
+		this.counterpointInSecondSpeciesButton.setOpaque(false);
+		this.counterpointInSecondSpeciesButton.setContentAreaFilled(false);
+		this.counterpointInThirdSpeciesButton = new JRadioButton("Compose third species");
+		this.counterpointInThirdSpeciesButton.setOpaque(false);
+		this.counterpointInThirdSpeciesButton.setContentAreaFilled(false);
+
+		this.composeButtons.add(cantusFirmusButton);
+		this.composeButtons.add(counterpointInFirstSpeciesButton);
+		this.composeButtons.add(counterpointInSecondSpeciesButton);
+		this.composeButtons.add(counterpointInThirdSpeciesButton);
+
+		this.buttons = new JLabel();
+		this.buttons.setLayout(new GridLayout(1,4));
+		this.buttons.add(cantusFirmusButton);
+		this.buttons.add(counterpointInFirstSpeciesButton);
+		this.buttons.add(counterpointInSecondSpeciesButton);
+		this.buttons.add(counterpointInThirdSpeciesButton);
+
+		this.pseudoComposeButton = new JButton("PseudoCompose");
+		this.pseudoComposeButton.setOpaque(false);
+		this.pseudoComposeButton.setContentAreaFilled(false);
+
+		drawLandingPage();
+
+		this.musicFrame = new JLabel();
+		this.musicFrame.setLayout(new GridBagLayout());
+		this.musicFrame.setBackground(Color.WHITE);
+
+		appPanel.add(musicFrame, "MusicFrame");
+
+		this.pseudoComposeButton.addActionListener(new ActionListener() {          
+		    public void actionPerformed(ActionEvent e) {
+		        if (cantusFirmusButton.isSelected()) {
+		        	makeCantusFirmus(true);
+		        } else if (counterpointInFirstSpeciesButton.isSelected()) {
+		        	makeFirstSpeciesCounterpoint();
+		        } else if (counterpointInSecondSpeciesButton.isSelected()) {
+		        	makeSecondSpeciesCounterpoint();
+		        } else if (counterpointInThirdSpeciesButton.isSelected()) {
+		        	makeThirdSpeciesCounterpoint();
+		        }
+		        drawMusic();
+		    }
+		}); 
 	}
 
 	/*
-		Add the mouse listeners for the application, including the right-click on a measure,
-		which adds a note, and the left-click, which deletes a note
+		Draws the view that displays our PseudoComposition
+		To-Do: Make it draw music
+		Make it create the proper number of measures
 	*/
-	public void addMouseListeners () {
-		this.label.addMouseListener( new MouseAdapter() {
- 			public void mousePressed(MouseEvent event) {
- 				//left-click: add note
- 				if (event.getModifiers() == MouseEvent.BUTTON1_MASK)
- 					addNote(event.getPoint());
- 				//right-click: remove note
- 				else if (event.getModifiers() == MouseEvent.BUTTON3_MASK)
-					deleteNote(event.getPoint());
- 			}
- 		} );
-	}
+	public void drawMusic() {
+		CardLayout cl = (CardLayout)(appPanel.getLayout());
+		int numberOfMeasures = (this.cantusFirmus.numNotes / 4) + 1;
+		this.gridBagConstraints = new GridBagConstraints();
 
-	/*
-		Stops any music that's playing, 
-		adds a note to the end of the measure,
-		updates the playerString,
-		repaints the measure
-	*/
-	public void addNote (Point p) {
-		if (playing)
-			stopPlaying();
-		this.entry.addNote(p);
-		this.playerString = this.entry.toString();
-		displayMeasure(this.entry);
-	}
+		this.measures = new BufferedImage[numberOfMeasures];
+		for (int i = 0; i < this.cantusFirmus.numNotes/4; ++i) {
+			this.measures[i] = new BufferedImage(460, 169, BufferedImage.TYPE_INT_ARGB);
+			this.g2d = (Graphics2D) this.measures[i].createGraphics();
+			//draw the background of the measure
+			g2d.setColor(Color.WHITE);
+			g2d.fillRect(0,0,460,169);
 
-	/*
-		Changes the instrument that will be used to play the PlayerString,
-		stops anything that's currently playing
-	*/
-	public void changeInstrument (String inst) {
-		this.instrument = inst;
-		if (playing)
-			stopPlaying();
-	}
-
-	/*
-		Stops any music that's playing, 
-		deletes a note if it has been right-clicked on
-		updates the playerString,
-		repaints the measure
-		future: only stop playing the measure and rewrite the measure if something was deleted
-	*/
-	public void deleteNote (Point p) {
-		this.entry.deleteNote(p);
-		if (playing)
-			stopPlaying();
-		this.playerString = this.entry.toString();
-		displayMeasure(this.entry);
-	}
-
-	/*
-		Paints the view from a Measure onto the label of the application
-	*/
-	public void displayMeasure (Measure measure) {
-		this.image = measure.getView();
-
-		SwingUtilities.invokeLater(new Runnable () {
-			public void run() {
-				icon.setImage( image );
-				label.repaint();
-				validate();
+			//draw the treble clef
+			if (i % 4 == 0) {
+				try {
+		            File imagefile = new File("clef.jpg");
+		            clef = ImageIO.read(imagefile);
+		        } catch (IOException e) {
+		              e.printStackTrace();
+		        }
+		        g2d.drawImage(clef, null, 0, 12);
 			}
-		});
-	}
 
-	/*
-		Prompts the user for a tempo in BPM - requires a positive integer
-	*/
-	private int getTempo () {
-		Boolean trying = true;
-		int val = 0;
-		
-		String stringVal = JOptionPane.showInputDialog("What tempo would you like? Your current tempo is " + this.tempo + "BPM");
+			//draw the lines of the staff
+			g2d.setColor(Color.BLACK);
+			g2d.drawLine(0, 28, 460, 28);
+			g2d.drawLine(0, 56, 460, 56);
+			g2d.drawLine(0, 84, 460, 84);
+			g2d.drawLine(0, 112, 460, 112);
+			g2d.drawLine(0, 140, 460, 140);
 
-		while (trying) {
-			try {
-				val = Integer.parseInt(stringVal);
-				if (val < 1)
-					throw new IllegalArgumentException();
-				trying = false;
-			}
-			catch (NumberFormatException e) {
-				stringVal = JOptionPane.showInputDialog("No, a positive number");
-			}
-			catch (IllegalArgumentException e) {
-				stringVal = JOptionPane.showInputDialog("No, a positive number");
-			}
+			//draw the border around the staff
+			g2d.setStroke(new BasicStroke(5.0f));
+			g2d.drawLine(0, 0, 459, 0);
+			//g2d.drawLine(0, 0, 0, 168);
+			g2d.drawLine(0, 168, 459, 168);
+			//g2d.drawLine(459, 168, 459, 0);
+			g2d.setStroke(new BasicStroke(1.0f));
+
+			this.measureIcons = new ImageIcon[numberOfMeasures];
+			this.measureLabels = new JLabel[numberOfMeasures];
+			this.measureIcons[i] = new ImageIcon(this.measures[i]);
+			this.measureLabels[i] = new JLabel(this.measureIcons[i]);
+			this.gridBagConstraints.gridx = i % 4;
+			this.gridBagConstraints.gridy = i / 4;
+			this.musicFrame.add(this.measureLabels[i], this.gridBagConstraints);
 		}
-		return val;
+
+		cl.show(appPanel, "MusicFrame");
+	}
+
+	/*
+		Draws the 4 radio buttons and the compose button
+	*/
+	public void drawLandingPageButtons() {
+		this.background.add(buttons, BorderLayout.CENTER);
+
+		this.background.add(pseudoComposeButton, BorderLayout.SOUTH);
+	}
+
+	/*
+		Draws and sets up the background and directions - also calls the method
+		that draws the buttons
+	*/
+	public void drawLandingPage() {
+		this.appPanel.add(background);
+		this.background.setLayout(new BorderLayout());
+		this.background.add(directions, BorderLayout.NORTH);
+
+		drawLandingPageButtons();
 	}
 
 	/*
@@ -220,7 +259,7 @@ class ImageFrame extends JFrame {
 	public CantusFirmus makeCantusFirmus (boolean play) {
 		int length;
 		Boolean trying = true;
-		CantusFirmus cantusFirmus = null;
+		this.cantusFirmus = null;
 
 		String stringVal = JOptionPane.showInputDialog("How long should your cantus firmus be (in whole notes)?");
 
@@ -318,29 +357,6 @@ class ImageFrame extends JFrame {
 	}
 
 	/*
-		Writes a chorale based on the entry - most of this logic is in Chorale.java,
-		plays that composition
-	*/
-	public void makeChorale (boolean hasEntry) {
-		int noteCount = this.entry.getNoteCount();
-		//don't write anything if you don't have enough notes because what's the point
-		if (noteCount < this.minNotes && hasEntry)
-			playCheesyToccata();
-		else {
-			if (hasEntry) {
-				composition = new Chorale(entry, entry.getKey());
-				composition.pseudoCompose();
-			}
-			else {
-				composition = new Chorale();
-				composition.pseudoComposeFromScratch();
-			}
-			this.playerString = composition.toString();
-			play();
-		}
-	}
-
-	/*
 		Returns a string representing the currently saved voices, notes, instrument, and tempo
 	*/
 	public String makeStringWithInstrumentAndTempo () {
@@ -390,24 +406,6 @@ class ImageFrame extends JFrame {
 	}
 
 	/*
-		plays the current entry
-	*/
-	public void playEntry () {
-		this.playerString = entry.toString();
-		play();
-	}
-
-	/*
-		Plays the beginning of Bach's Toccata in Dm and asks for more notes to work with
-	*/
-	public void playCheesyToccata () {
-		this.playerString = "T60 d2s d3s c#3s d3s a3s d3s c#3s d3s f3s d3s c#3s d3s d2s d3s c3s d3s";
-		play();	
-		String disc = "I'm going to need a few more notes than that to work with...";
-		this.disclaimer.showMessageDialog(this, disc);	
-	}
-
-	/*
 		Writes the PlayerString to a txt file in the user's current directory
 		Future: Save as XML format so that it can be imported into Finale, possibly with a later prompt
 		with instructions or a file format *choice*
@@ -418,233 +416,10 @@ class ImageFrame extends JFrame {
 	}
 
 	/*
-		Returns a JMenu initialized with the offered instrument choices, organized in alphabetical
-		order. The default instrument choice for the app is 'PIANO' (though 'warm' sounds better
-		for chorales in my opinion...)
-	*/
-	public JMenu setUpInstrumentChoices () {
-		JMenu changeInstrumentMenu = new JMenu("Change instrument");
-
-		JMenuItem accordian = new JMenuItem("Accordian");
-		accordian.addActionListener (new ActionListener () {
-			public void actionPerformed (ActionEvent event) {
-				changeInstrument("ACCORDIAN");
-			}
-		});
-		changeInstrumentMenu.add(accordian);
-
-		JMenuItem bass = new JMenuItem("Acoustic Bass");
-		bass.addActionListener (new ActionListener () {
-			public void actionPerformed (ActionEvent event) {
-				changeInstrument("ACOUSTIC_BASS");
-			}
-		});
-		changeInstrumentMenu.add(bass);
-
-		JMenuItem bagpipe = new JMenuItem("Bagpipe");
-		bagpipe.addActionListener (new ActionListener () {
-			public void actionPerformed (ActionEvent event) {
-				changeInstrument("BAGPIPE");
-			}
-		});
-		changeInstrumentMenu.add(bagpipe);
-
-		JMenuItem banjo = new JMenuItem("Banjo");
-		banjo.addActionListener (new ActionListener () {
-			public void actionPerformed (ActionEvent event) {
-				changeInstrument("BANJO");
-			}
-		});
-		changeInstrumentMenu.add(banjo);
-
-		JMenuItem clarinet = new JMenuItem("Clarinet");
-		clarinet.addActionListener (new ActionListener () {
-			public void actionPerformed (ActionEvent event) {
-				changeInstrument("CLARINET");
-			}
-		});
-		changeInstrumentMenu.add(clarinet);
-
-		JMenuItem crystal = new JMenuItem("Crystal Glasses");
-		crystal.addActionListener (new ActionListener () {
-			public void actionPerformed (ActionEvent event) {
-				changeInstrument("CRYSTAL");
-			}
-		});
-		changeInstrumentMenu.add(crystal);
-
-		JMenuItem flute = new JMenuItem("Flute");
-		flute.addActionListener (new ActionListener () {
-			public void actionPerformed (ActionEvent event) {
-				changeInstrument("FLUTE");
-			}
-		});
-		changeInstrumentMenu.add(flute);
-
-		JMenuItem horn = new JMenuItem("French Horn");
-		horn.addActionListener (new ActionListener () {
-			public void actionPerformed (ActionEvent event) {
-				changeInstrument("FRENCH_HORN");
-			}
-		});
-		changeInstrumentMenu.add(horn);
-
-		JMenuItem goblin = new JMenuItem("Goblins");
-		goblin.addActionListener (new ActionListener () {
-			public void actionPerformed (ActionEvent event) {
-				changeInstrument("GOBLINS");
-			}
-		});
-		changeInstrumentMenu.add(goblin);
-
-		JMenuItem marimba = new JMenuItem("Marimba");
-		marimba.addActionListener (new ActionListener () {
-			public void actionPerformed (ActionEvent event) {
-				changeInstrument("MARIMBA");
-			}
-		});
-		changeInstrumentMenu.add(marimba);
-
-		JMenuItem oboe = new JMenuItem("Oboe");
-		oboe.addActionListener (new ActionListener () {
-			public void actionPerformed (ActionEvent event) {
-				changeInstrument("OBOE");
-			}
-		});
-		changeInstrumentMenu.add(oboe);
-
-		JMenuItem ocarina = new JMenuItem("Ocarina");
-		ocarina.addActionListener (new ActionListener () {
-			public void actionPerformed (ActionEvent event) {
-				changeInstrument("OCARINA");
-			}
-		});
-		changeInstrumentMenu.add(ocarina);
-
-		JMenuItem organ = new JMenuItem("Organ");
-		organ.addActionListener (new ActionListener () {
-			public void actionPerformed (ActionEvent event) {
-				changeInstrument("CHURCH_ORGAN");
-			}
-		});
-		changeInstrumentMenu.add(organ);
-
-		JMenuItem piano = new JMenuItem("Piano");
-		piano.addActionListener (new ActionListener () {
-			public void actionPerformed (ActionEvent event) {
-				changeInstrument("PIANO");
-			}
-		});
-		changeInstrumentMenu.add(piano);
-
-		JMenuItem steel = new JMenuItem("Steel Drums");
-		steel.addActionListener (new ActionListener () {
-			public void actionPerformed (ActionEvent event) {
-				changeInstrument("STEEL_DRUMS");
-			}
-		});
-		changeInstrumentMenu.add(steel);
-
-		JMenuItem voice = new JMenuItem("Steel");
-		voice.addActionListener (new ActionListener () {
-			public void actionPerformed (ActionEvent event) {
-				changeInstrument("VOICE");
-			}
-		});
-		changeInstrumentMenu.add(voice);
-
-		JMenuItem strings = new JMenuItem("Strings");
-		strings.addActionListener (new ActionListener () {
-			public void actionPerformed (ActionEvent event) {
-				changeInstrument("ORCHESTRAL_STRINGS");
-			}
-		});
-		changeInstrumentMenu.add(strings);
-
-		JMenuItem warm = new JMenuItem("Warm");
-		warm.addActionListener (new ActionListener () {
-			public void actionPerformed (ActionEvent event) {
-				changeInstrument("WARM");
-			}
-		});
-		changeInstrumentMenu.add(warm);
-
-		return changeInstrumentMenu;
-	}
-
-	/*
 		Adds the menu items to the menu
 	*/
 	public void setUpMenu () {
 		JMenu fileMenu = new JMenu("Options");
-
-		JMenuItem makeCantusFirmusItem = new JMenuItem("Write cantus firmus");
-		makeCantusFirmusItem.addActionListener (new ActionListener () {
-			public void actionPerformed (ActionEvent event) {
-				makeCantusFirmus(true);
-			}
-		});
-		fileMenu.add(makeCantusFirmusItem);
-
-		JMenuItem makeFirstSpeciesCounterpointItem = new JMenuItem("Write a 2-part, first species counterpoint line");
-		makeFirstSpeciesCounterpointItem.addActionListener (new ActionListener () {
-			public void actionPerformed (ActionEvent event) {
-				makeFirstSpeciesCounterpoint();
-			}
-		});
-		fileMenu.add(makeFirstSpeciesCounterpointItem);
-
-		JMenuItem makeSecondSpeciesCounterpointItem = new JMenuItem("Write a 2-part, second species counterpoint line");
-		makeSecondSpeciesCounterpointItem.addActionListener (new ActionListener () {
-			public void actionPerformed (ActionEvent event) {
-				makeSecondSpeciesCounterpoint();
-			}
-		});
-		fileMenu.add(makeSecondSpeciesCounterpointItem);
-
-		JMenuItem makeThirdSpeciesCounterpointItem = new JMenuItem("Write a 2-part, third species counterpoint line");
-		makeThirdSpeciesCounterpointItem.addActionListener (new ActionListener () {
-			public void actionPerformed (ActionEvent event) {
-				makeThirdSpeciesCounterpoint();
-			}
-		});
-		fileMenu.add(makeThirdSpeciesCounterpointItem);
-
-		JMenuItem playEntryItem = new JMenuItem("Play current entry");
-		playEntryItem.addActionListener (new ActionListener () {
-			public void actionPerformed (ActionEvent event) {
-				playEntry();
-			}
-		});
-		fileMenu.add(playEntryItem);
-
-		JMenuItem composeChoraleItem = new JMenuItem("Compose chorale");
-		composeChoraleItem.addActionListener (new ActionListener () {
-			public void actionPerformed (ActionEvent event) {
-				makeChorale(true);
-			}
-		});
-		fileMenu.add(composeChoraleItem);
-
-		JMenuItem composeChoraleFromScratchItem = new JMenuItem("Compose chorale from scratch");
-		composeChoraleFromScratchItem.addActionListener (new ActionListener () {
-			public void actionPerformed (ActionEvent event) {
-				makeChorale(false);
-			}
-		});
-		fileMenu.add(composeChoraleFromScratchItem);
-
-		fileMenu.add(setUpInstrumentChoices());
-
-		JMenuItem tempoItem = new JMenuItem("Set tempo");
-		tempoItem.addActionListener (new ActionListener () {
-			public void actionPerformed (ActionEvent event) {
-				tempo = getTempo();
-				if (playing)
-					stopPlaying();
-			}
-		});
-		fileMenu.add(tempoItem);
 
 		JMenuItem save = new JMenuItem("Save last algorhythmic composition");
 		save.addActionListener (new ActionListener () {
