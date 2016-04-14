@@ -1,0 +1,4 @@
+# Java class files and generated XML files
+# ==========================
+*.class
+*.XML
