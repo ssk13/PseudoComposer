@@ -48,15 +48,17 @@ class ImageFrame extends JFrame {
 	//visual application components
 	private final JFileChooser chooser;
 	JPanel appPanel;
-	JLabel directions;
-	JLabel buttons;
-	JLabel background;
-	JLabel musicFrame;
-	JRadioButton cantusFirmusButton;
-	JRadioButton counterpointInFirstSpeciesButton;
-	JRadioButton counterpointInSecondSpeciesButton;
-	JRadioButton counterpointInThirdSpeciesButton;
-	JButton pseudoComposeButton;
+	JLabel directions,
+			buttons,
+			background,
+			musicCard,
+			measuresLabel;
+	JRadioButton cantusFirmusButton,
+				 counterpointInFirstSpeciesButton,
+				 counterpointInSecondSpeciesButton,
+				 counterpointInThirdSpeciesButton;
+	JButton pseudoComposeButton,
+			landingPageButton;
 	ButtonGroup composeButtons;
 
 	//style variables
@@ -148,12 +150,27 @@ class ImageFrame extends JFrame {
 
 		drawLandingPage();
 
-		this.musicFrame = new JLabel();
-		this.musicFrame.setLayout(new GridBagLayout());
-		this.musicFrame.setBackground(Color.WHITE);
+		this.musicCard = new JLabel();
+		this.musicCard.setLayout(new BorderLayout());
+		this.musicCard.setBackground(Color.WHITE);
 
-		appPanel.add(musicFrame, "MusicFrame");
+		this.measuresLabel = new JLabel();
+		this.measuresLabel.setLayout(new GridBagLayout());
 
+		this.landingPageButton = new JButton("PseudoCompose Again");
+
+		this.musicCard.add(measuresLabel, BorderLayout.CENTER);
+		this.musicCard.add(landingPageButton, BorderLayout.SOUTH);
+
+		appPanel.add(musicCard, "MusicCard");
+
+		setUpActionListeners();
+	}
+
+	/*
+		Sets up the action listeners for the buttons
+	*/
+	public void setUpActionListeners() {
 		this.pseudoComposeButton.addActionListener(new ActionListener() {          
 		    public void actionPerformed(ActionEvent e) {
 		        if (cantusFirmusButton.isSelected()) {
@@ -166,6 +183,12 @@ class ImageFrame extends JFrame {
 		        	makeThirdSpeciesCounterpoint();
 		        }
 		        drawMusic();
+		    }
+		}); 
+
+		this.landingPageButton.addActionListener(new ActionListener() {          
+		    public void actionPerformed(ActionEvent e) {
+		        goToLandingPage();
 		    }
 		}); 
 	}
@@ -221,10 +244,18 @@ class ImageFrame extends JFrame {
 			this.measureLabels[i] = new JLabel(this.measureIcons[i]);
 			this.gridBagConstraints.gridx = i % 4;
 			this.gridBagConstraints.gridy = i / 4;
-			this.musicFrame.add(this.measureLabels[i], this.gridBagConstraints);
+			this.measuresLabel.add(this.measureLabels[i], this.gridBagConstraints);
 		}
 
-		cl.show(appPanel, "MusicFrame");
+		cl.show(appPanel, "MusicCard");
+	}
+
+	/*
+		Switches to the landing page card
+	*/
+	public void goToLandingPage() {
+		CardLayout cl = (CardLayout)(appPanel.getLayout());
+		cl.show(appPanel, "LandingPageCard");
 	}
 
 	/*
@@ -241,7 +272,7 @@ class ImageFrame extends JFrame {
 		that draws the buttons
 	*/
 	public void drawLandingPage() {
-		this.appPanel.add(background);
+		this.appPanel.add(background, "LandingPageCard");
 		this.background.setLayout(new BorderLayout());
 		this.background.add(directions, BorderLayout.NORTH);
 
